@@ -7,6 +7,6 @@
 # * https://testthat.r-lib.org/reference/test_package.html#special-files
 
 library(testthat)
-library(clessn_plot)
+library(clessnize)
 
-test_check("clessn_plot")
+test_check("clessnize")
