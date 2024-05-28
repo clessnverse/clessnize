@@ -78,12 +78,12 @@ theme_clean_light <- function(base_size = 11,
       axis.title.x = ggplot2::element_text(
         margin = ggplot2::margin(r = half_line,
                                  t = half_line),
-        hjust = 1
+        hjust = 0.5
       ),
       axis.title.y = ggplot2::element_text(
         margin = ggplot2::margin(r = half_line,
                                  b = half_line),
-        hjust = 1
+        hjust = 0.5
       ),
       axis.line.x = ggplot2::element_blank(),
       legend.position = "bottom",
@@ -96,7 +96,7 @@ theme_clean_light <- function(base_size = 11,
         face = "bold",
         colour = primary_colour,
         size = base_size * 1.5,
-        hjust = 0
+        hjust = 0.5
       ),
       plot.background = ggplot2::element_rect(fill = bg_colour, colour = bg_colour),
       panel.background = ggplot2::element_rect(fill = NA),
@@ -133,12 +133,12 @@ theme_clean_dark <- function(base_size = 11,
       axis.title.x = ggplot2::element_text(
         margin = ggplot2::margin(r = half_line,
                                  t = half_line),
-        hjust = 1
+        hjust = 0.5
       ),
       axis.title.y = ggplot2::element_text(
         margin = ggplot2::margin(r = half_line,
                                  b = half_line),
-        hjust = 1
+        hjust = 0.5
       ),
       axis.line.x = ggplot2::element_blank(),
       legend.position = "bottom",
@@ -151,7 +151,7 @@ theme_clean_dark <- function(base_size = 11,
         face = "bold",
         colour = primary_colour,
         size = base_size * 1.5,
-        hjust = 0
+        hjust = 0.5
       ),
       plot.background = ggplot2::element_rect(fill = bg_colour, colour = bg_colour),
       panel.background = ggplot2::element_rect(fill = NA),
