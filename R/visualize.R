@@ -22,7 +22,6 @@
 #' \item{`theme_clean_dark()`}{
 #' A clean-looking ggplot2 theme, with x axis line and y major gridlines or axis ticks on a dark grey background.}
 #' }
-#' @author Judith Bourque
 #' @examples
 #' \dontrun{
 #' p  <- ggplot2::ggplot(data = ggplot2::mpg) +
@@ -33,7 +32,7 @@
 #'    caption = "Data: API Twitter \nCLESSN"
 #'  ) +
 #'  ggplot2::xlab("x axis label") +
-#' ggplot2::ylab("y axis label")
+#'  ggplot2::ylab("y axis label")
 #'
 #' p + theme_clean_light()
 #' p + theme_clean_dark()
@@ -48,6 +47,7 @@
 #' @importFrom ggplot2 element_blank
 #' @importFrom ggplot2 margin
 NULL
+
 #' @export
 #' @rdname visualization
 theme_clean_light <- function(base_size = 11,
@@ -61,13 +61,10 @@ theme_clean_light <- function(base_size = 11,
                               secondary_colour = "grey30",
                               minor_colour = "#f7f7f7",
                               bg_colour = "white",
-                              strip_colour = "white") {
-  # Add font
-  # sysfonts::font_add_google("Roboto", "roboto")
-  # showtext::showtext_auto()
-
+                              strip_colour = "white",
+                              boule = FALSE) {
   # Base theme
-  ggplot2::theme_classic() +
+  theme <- ggplot2::theme_classic() +
     # Changes to apply to base theme
     ggplot2::theme(
       text = ggplot2::element_text(size = base_size, colour = secondary_colour),
@@ -102,7 +99,20 @@ theme_clean_light <- function(base_size = 11,
       panel.background = ggplot2::element_rect(fill = NA),
       strip.background = ggplot2::element_blank()
     )
+  
+  # Conditionally add background image
+  if (boule) {
+    boule_image_path <- system.file("extdata/boule.png", package = "clessnize")
+    boule_image <- readPNG(boule_image_path)
+    boule_grob <- rasterGrob(boule_image, width = unit(1, "npc"), height = unit(1, "npc"), interpolate = TRUE)
+    
+    theme <- theme +
+      annotation_custom(boule_grob, xmin = -Inf, xmax = Inf, ymin = -Inf, ymax = Inf)
+  }
+  
+  return(theme)
 }
+
 #' @export
 #' @rdname visualization
 theme_clean_dark <- function(base_size = 11,
@@ -116,13 +126,10 @@ theme_clean_dark <- function(base_size = 11,
                              secondary_colour = "#f2f2f2",
                              minor_colour = "#525252",
                              bg_colour = "#494949",
-                             strip_colour = "grey80") {
-  # Add font
-  # sysfonts::font_add_google("Roboto", "roboto")
-  # showtext::showtext_auto()
-
+                             strip_colour = "grey80",
+                             boule = FALSE) {
   # Base theme
-  ggplot2::theme_classic() +
+  theme <- ggplot2::theme_classic() +
     # Changes to apply to base theme
     ggplot2::theme(
       text = ggplot2::element_text(size = base_size, colour = secondary_colour),
@@ -157,4 +164,16 @@ theme_clean_dark <- function(base_size = 11,
       panel.background = ggplot2::element_rect(fill = NA),
       strip.background = ggplot2::element_blank()
     )
+  
+  # Conditionally add background image
+  if (boule) {
+    boule_image_path <- system.file("extdata/boule.png", package = "clessnize")
+    boule_image <- readPNG(boule_image_path)
+    boule_grob <- rasterGrob(boule_image, width = unit(1, "npc"), height = unit(1, "npc"), interpolate = TRUE)
+    
+    theme <- theme +
+      annotation_custom(boule_grob, xmin = -Inf, xmax = Inf, ymin = -Inf, ymax = Inf)
+  }
+  
+  return(theme)
 }
