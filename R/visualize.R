@@ -12,7 +12,7 @@
 #' @param strip_colour strip background colour
 #' @param half_line half line
 #' @param base_margin base margin
-#' @return A ggplot2 theme.
+#' @return A ggplot2 theme or a list containing a ggplot2 theme and a function.
 #' @details
 #' \describe{
 #'
@@ -119,13 +119,12 @@ theme_clean_light <- function(base_size = 11,
       strip.background = ggplot2::element_blank()
     )
   
-  # Conditionally add PNG image overlay
   if (boule) {
     boule_image_path <- system.file("extdata/boule.png", package = "clessnize")
     boule_image <- png::readPNG(boule_image_path)
-    list(theme, function(plot) add_png_fill(plot, issue_counts, boule_image))
+    return(list(theme, function(plot) add_png_fill(plot, data, boule_image)))
   } else {
-    list(theme)
+    return(theme)
   }
 }
 
@@ -181,12 +180,11 @@ theme_clean_dark <- function(base_size = 11,
       strip.background = ggplot2::element_blank()
     )
   
-  # Conditionally add PNG image overlay
   if (boule) {
     boule_image_path <- system.file("extdata/boule.png", package = "clessnize")
     boule_image <- png::readPNG(boule_image_path)
-    list(theme, function(plot) add_png_fill(plot, issue_counts, boule_image))
+    return(list(theme, function(plot) add_png_fill(plot, data, boule_image)))
   } else {
-    list(theme)
+    return(theme)
   }
 }

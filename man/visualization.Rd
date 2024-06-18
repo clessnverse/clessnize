@@ -59,7 +59,7 @@ theme_clean_dark(
 \item{strip_colour}{strip background colour}
 }
 \value{
-A ggplot2 theme.
+A ggplot2 theme or a list containing a ggplot2 theme and a function.
 }
 \description{
 `r lifecycle::badge("experimental")`
