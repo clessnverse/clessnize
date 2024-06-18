@@ -57,6 +57,8 @@ theme_clean_dark(
 \item{bg_colour}{plot background colour}
 
 \item{strip_colour}{strip background colour}
+
+\item{boule}{If TRUE, fills the bars with a PNG image instead of color}
 }
 \value{
 A ggplot2 theme or a list containing a ggplot2 theme and a function.

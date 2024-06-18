@@ -12,6 +12,7 @@
 #' @param strip_colour strip background colour
 #' @param half_line half line
 #' @param base_margin base margin
+#' @param boule If TRUE, fills the bars with a PNG image instead of color
 #' @return A ggplot2 theme or a list containing a ggplot2 theme and a function.
 #' @details
 #' \describe{
@@ -49,23 +50,6 @@
 #' @importFrom grid rasterGrob
 #' @importFrom png readPNG
 NULL
-
-#' Add PNG image overlay to bars
-#'
-#' @param plot The ggplot object
-#' @param data The data frame containing the counts
-#' @param image The PNG image to overlay
-#' @return The ggplot object with the PNG image overlay
-#' @noRd
-add_png_fill <- function(plot, data, image) {
-  for (i in 1:nrow(data)) {
-    plot <- plot + annotation_custom(
-      rasterGrob(image, width = unit(1, "npc"), height = unit(1, "npc"), interpolate = TRUE),
-      xmin = i - 0.5, xmax = i + 0.5, ymin = 0, ymax = data$n[i]
-    )
-  }
-  return(plot)
-}
 
 #' @export
 #' @rdname visualization
@@ -121,8 +105,7 @@ theme_clean_light <- function(base_size = 11,
   
   if (boule) {
     boule_image_path <- system.file("extdata/boule.png", package = "clessnize")
-    boule_image <- png::readPNG(boule_image_path)
-    return(list(theme, function(plot) add_png_fill(plot, data, boule_image)))
+    return(list(theme, boule_image_path))
   } else {
     return(theme)
   }
@@ -182,8 +165,7 @@ theme_clean_dark <- function(base_size = 11,
   
   if (boule) {
     boule_image_path <- system.file("extdata/boule.png", package = "clessnize")
-    boule_image <- png::readPNG(boule_image_path)
-    return(list(theme, function(plot) add_png_fill(plot, data, boule_image)))
+    return(list(theme, boule_image_path))
   } else {
     return(theme)
   }
