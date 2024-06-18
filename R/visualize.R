@@ -50,6 +50,23 @@
 #' @importFrom png readPNG
 NULL
 
+#' Add PNG image overlay to bars
+#'
+#' @param plot The ggplot object
+#' @param data The data frame containing the counts
+#' @param image The PNG image to overlay
+#' @return The ggplot object with the PNG image overlay
+#' @noRd
+add_png_fill <- function(plot, data, image) {
+  for (i in 1:nrow(data)) {
+    plot <- plot + annotation_custom(
+      rasterGrob(image, width = unit(1, "npc"), height = unit(data$n[i] / max(data$n), "npc"), interpolate = TRUE),
+      xmin = i - 0.5, xmax = i + 0.5, ymin = 0, ymax = data$n[i]
+    )
+  }
+  return(plot)
+}
+
 #' @export
 #' @rdname visualization
 theme_clean_light <- function(base_size = 11,
@@ -102,20 +119,14 @@ theme_clean_light <- function(base_size = 11,
       strip.background = ggplot2::element_blank()
     )
   
-  # Create a list to hold theme and annotation
-  elements <- list(theme)
-  
-  # Conditionally add background image
+  # Conditionally add PNG image overlay
   if (boule) {
     boule_image_path <- system.file("extdata/boule.png", package = "clessnize")
     boule_image <- png::readPNG(boule_image_path)
-    boule_grob <- grid::rasterGrob(boule_image, width = grid::unit(1, "npc"), height = grid::unit(1, "npc"), interpolate = TRUE)
-    
-    # Add annotation_custom to the elements list
-    elements <- c(elements, list(ggplot2::annotation_custom(boule_grob, xmin = -Inf, xmax = Inf, ymin = -Inf, ymax = Inf)))
+    theme <- list(theme, function(plot) add_png_fill(plot, issue_counts, boule_image))
   }
   
-  return(elements)
+  return(theme)
 }
 
 #' @export
@@ -170,18 +181,12 @@ theme_clean_dark <- function(base_size = 11,
       strip.background = ggplot2::element_blank()
     )
   
-  # Create a list to hold theme and annotation
-  elements <- list(theme)
-  
-  # Conditionally add background image
+  # Conditionally add PNG image overlay
   if (boule) {
     boule_image_path <- system.file("extdata/boule.png", package = "clessnize")
     boule_image <- png::readPNG(boule_image_path)
-    boule_grob <- grid::rasterGrob(boule_image, width = grid::unit(1, "npc"), height = grid::unit(1, "npc"), interpolate = TRUE)
-    
-    # Add annotation_custom to the elements list
-    elements <- c(elements, list(ggplot2::annotation_custom(boule_grob, xmin = -Inf, xmax = Inf, ymin = -Inf, ymax = Inf)))
+    theme <- list(theme, function(plot) add_png_fill(plot, issue_counts, boule_image))
   }
   
-  return(elements)
+  return(theme)
 }
