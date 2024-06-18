@@ -13,7 +13,7 @@
 #' @param half_line half line
 #' @param base_margin base margin
 #' @param boule If TRUE, fills the bars with a PNG image instead of color
-#' @return A ggplot2 theme or a list containing a ggplot2 theme and a function.
+#' @return A ggplot2 theme or a ggplot2 plot.
 #' @details
 #' \describe{
 #'
@@ -65,49 +65,46 @@ theme_clean_light <- function(base_size = 11,
                               minor_colour = "#f7f7f7",
                               bg_colour = "white",
                               strip_colour = "white",
-                              boule = FALSE) {
-  # Base theme
-  theme <- ggplot2::theme_classic() +
-    # Changes to apply to base theme
-    ggplot2::theme(
-      text = ggplot2::element_text(size = base_size, colour = secondary_colour),
-      axis.text = ggplot2::element_text(colour = secondary_colour),
-      axis.ticks.x = ggplot2::element_blank(),
-      axis.ticks.y = ggplot2::element_blank(),
-      axis.line.y = ggplot2::element_blank(),
-      axis.title.x = ggplot2::element_text(
-        margin = ggplot2::margin(r = half_line,
-                                 t = half_line),
-        hjust = 0.5
-      ),
-      axis.title.y = ggplot2::element_text(
-        margin = ggplot2::margin(r = half_line,
-                                 b = half_line),
-        hjust = 0.5
-      ),
-      axis.line.x = ggplot2::element_blank(),
-      legend.position = "bottom",
-      legend.title = ggplot2::element_blank(),
-      legend.background = ggplot2::element_rect(fill = NA),
-      # Align caption with left
-      panel.grid.major.y = ggplot2::element_line(colour = minor_colour),
-      plot.caption = ggplot2::element_text(hjust = 0, face = "italic"),
-      plot.title = ggplot2::element_text(
-        face = "bold",
-        colour = primary_colour,
-        size = base_size * 1.5,
-        hjust = 0.5
-      ),
-      plot.background = ggplot2::element_rect(fill = bg_colour, colour = bg_colour),
-      panel.background = ggplot2::element_rect(fill = NA),
-      strip.background = ggplot2::element_blank()
-    )
-  
+                              boule = FALSE,
+                              data = NULL,
+                              plot = NULL) {
   if (boule) {
     boule_image_path <- system.file("extdata/boule.png", package = "clessnize")
-    return(list(theme, boule_image_path))
+    return(add_png_fill(plot, data, boule_image_path))
   } else {
-    return(theme)
+    return(
+      ggplot2::theme_classic() +
+        ggplot2::theme(
+          text = ggplot2::element_text(size = base_size, colour = secondary_colour),
+          axis.text = ggplot2::element_text(colour = secondary_colour),
+          axis.ticks.x = ggplot2::element_blank(),
+          axis.ticks.y = ggplot2::element_blank(),
+          axis.line.y = ggplot2::element_blank(),
+          axis.title.x = ggplot2::element_text(
+            margin = ggplot2::margin(r = half_line, t = half_line),
+            hjust = 0.5
+          ),
+          axis.title.y = ggplot2::element_text(
+            margin = ggplot2::margin(r = half_line, b = half_line),
+            hjust = 0.5
+          ),
+          axis.line.x = ggplot2::element_blank(),
+          legend.position = "bottom",
+          legend.title = ggplot2::element_blank(),
+          legend.background = ggplot2::element_rect(fill = NA),
+          panel.grid.major.y = ggplot2::element_line(colour = minor_colour),
+          plot.caption = ggplot2::element_text(hjust = 0, face = "italic"),
+          plot.title = ggplot2::element_text(
+            face = "bold",
+            colour = primary_colour,
+            size = base_size * 1.5,
+            hjust = 0.5
+          ),
+          plot.background = ggplot2::element_rect(fill = bg_colour, colour = bg_colour),
+          panel.background = ggplot2::element_rect(fill = NA),
+          strip.background = ggplot2::element_blank()
+        )
+    )
   }
 }
 
@@ -125,67 +122,45 @@ theme_clean_dark <- function(base_size = 11,
                              minor_colour = "#525252",
                              bg_colour = "#494949",
                              strip_colour = "grey80",
-                             boule = FALSE) {
-  # Base theme
-  theme <- ggplot2::theme_classic() +
-    # Changes to apply to base theme
-    ggplot2::theme(
-      text = ggplot2::element_text(size = base_size, colour = secondary_colour),
-      axis.text = ggplot2::element_text(colour = secondary_colour),
-      axis.ticks.x = ggplot2::element_blank(),
-      axis.ticks.y = ggplot2::element_blank(),
-      axis.line.y = ggplot2::element_blank(),
-      axis.title.x = ggplot2::element_text(
-        margin = ggplot2::margin(r = half_line,
-                                 t = half_line),
-        hjust = 0.5
-      ),
-      axis.title.y = ggplot2::element_text(
-        margin = ggplot2::margin(r = half_line,
-                                 b = half_line),
-        hjust = 0.5
-      ),
-      axis.line.x = ggplot2::element_blank(),
-      legend.position = "bottom",
-      legend.title = ggplot2::element_blank(),
-      legend.background = ggplot2::element_rect(fill = NA),
-      # Align caption with left
-      panel.grid.major.y = ggplot2::element_line(colour = minor_colour),
-      plot.caption = ggplot2::element_text(hjust = 0, face = "italic"),
-      plot.title = ggplot2::element_text(
-        face = "bold",
-        colour = primary_colour,
-        size = base_size * 1.5,
-        hjust = 0.5
-      ),
-      plot.background = ggplot2::element_rect(fill = bg_colour, colour = bg_colour),
-      panel.background = ggplot2::element_rect(fill = NA),
-      strip.background = ggplot2::element_blank()
-    )
-  
+                             boule = FALSE,
+                             data = NULL,
+                             plot = NULL) {
   if (boule) {
     boule_image_path <- system.file("extdata/boule.png", package = "clessnize")
-    return(list(theme, boule_image_path))
+    return(add_png_fill(plot, data, boule_image_path))
   } else {
-    return(theme)
-  }
-}
-#' Add PNG image overlay to bars
-#'
-#' @param plot The ggplot object
-#' @param data The data frame containing the counts
-#' @param image_path The path to the PNG image to overlay
-#' @return The ggplot object with the PNG image overlay
-#' @noRd
-add_png_fill <- function(plot, data, image_path) {
-  # Load the PNG image
-  image <- png::readPNG(image_path)
-  
-  for (i in 1:nrow(data)) {
-    plot <- plot + ggplot2::annotation_custom(
-      grid::rasterGrob(image, width = grid::unit(1, "npc"), height = grid::unit(1, "npc"), interpolate = TRUE),
-      xmin = i - 0.5, xmax = i + 0.5, ymin = 0, ymax = data$n[i]
+    return(
+      ggplot2::theme_classic() +
+        ggplot2::theme(
+          text = ggplot2::element_text(size = base_size, colour = secondary_colour),
+          axis.text = ggplot2::element_text(colour = secondary_colour),
+          axis.ticks.x = ggplot2::element_blank(),
+          axis.ticks.y = ggplot2::element_blank(),
+          axis.line.y = ggplot2::element_blank(),
+          axis.title.x = ggplot2::element_text(
+            margin = ggplot2::margin(r = half_line, t = half_line),
+            hjust = 0.5
+          ),
+          axis.title.y = ggplot2::element_text(
+            margin = ggplot2::margin(r = half_line, b = half_line),
+            hjust = 0.5
+          ),
+          axis.line.x = ggplot2::element_blank(),
+          legend.position = "bottom",
+          legend.title = ggplot2::element_blank(),
+          legend.background = ggplot2::element_rect(fill = NA),
+          panel.grid.major.y = ggplot2::element_line(colour = minor_colour),
+          plot.caption = ggplot2::element_text(hjust = 0, face = "italic"),
+          plot.title = ggplot2::element_text(
+            face = "bold",
+            colour = primary_colour,
+            size = base_size * 1.5,
+            hjust = 0.5
+          ),
+          plot.background = ggplot2::element_rect(fill = bg_colour, colour = bg_colour),
+          panel.background = ggplot2::element_rect(fill = NA),
+          strip.background = ggplot2::element_blank()
+        )
     )
   }
-  return(plot)
 }

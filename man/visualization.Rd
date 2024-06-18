@@ -17,7 +17,9 @@ theme_clean_light(
   minor_colour = "#f7f7f7",
   bg_colour = "white",
   strip_colour = "white",
-  boule = FALSE
+  boule = FALSE,
+  data = NULL,
+  plot = NULL
 )
 
 theme_clean_dark(
@@ -32,7 +34,9 @@ theme_clean_dark(
   minor_colour = "#525252",
   bg_colour = "#494949",
   strip_colour = "grey80",
-  boule = FALSE
+  boule = FALSE,
+  data = NULL,
+  plot = NULL
 )
 }
 \arguments{
@@ -61,7 +65,7 @@ theme_clean_dark(
 \item{boule}{If TRUE, fills the bars with a PNG image instead of color}
 }
 \value{
-A ggplot2 theme or a list containing a ggplot2 theme and a function.
+A ggplot2 theme or a ggplot2 plot.
 }
 \description{
 `r lifecycle::badge("experimental")`
