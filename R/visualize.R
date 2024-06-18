@@ -12,7 +12,7 @@
 #' @param strip_colour strip background colour
 #' @param half_line half line
 #' @param base_margin base margin
-#' @return A ggplot2 theme.
+#' @return A list containing a ggplot2 theme and, optionally, an annotation.
 #' @details
 #' \describe{
 #'
@@ -102,17 +102,20 @@ theme_clean_light <- function(base_size = 11,
       strip.background = ggplot2::element_blank()
     )
   
+  # Create a list to hold theme and annotation
+  elements <- list(theme)
+  
   # Conditionally add background image
   if (boule) {
     boule_image_path <- system.file("extdata/boule.png", package = "clessnize")
     boule_image <- png::readPNG(boule_image_path)
     boule_grob <- grid::rasterGrob(boule_image, width = grid::unit(1, "npc"), height = grid::unit(1, "npc"), interpolate = TRUE)
     
-    # Add annotation_custom to the plot
-    theme <- theme + ggplot2::annotation_custom(boule_grob, xmin = -Inf, xmax = Inf, ymin = -Inf, ymax = Inf)
+    # Add annotation_custom to the elements list
+    elements <- c(elements, list(ggplot2::annotation_custom(boule_grob, xmin = -Inf, xmax = Inf, ymin = -Inf, ymax = Inf)))
   }
   
-  return(theme)
+  return(elements)
 }
 
 #' @export
@@ -167,15 +170,18 @@ theme_clean_dark <- function(base_size = 11,
       strip.background = ggplot2::element_blank()
     )
   
+  # Create a list to hold theme and annotation
+  elements <- list(theme)
+  
   # Conditionally add background image
   if (boule) {
     boule_image_path <- system.file("extdata/boule.png", package = "clessnize")
     boule_image <- png::readPNG(boule_image_path)
     boule_grob <- grid::rasterGrob(boule_image, width = grid::unit(1, "npc"), height = grid::unit(1, "npc"), interpolate = TRUE)
     
-    # Add annotation_custom to the plot
-    theme <- theme + ggplot2::annotation_custom(boule_grob, xmin = -Inf, xmax = Inf, ymin = -Inf, ymax = Inf)
+    # Add annotation_custom to the elements list
+    elements <- c(elements, list(ggplot2::annotation_custom(boule_grob, xmin = -Inf, xmax = Inf, ymin = -Inf, ymax = Inf)))
   }
   
-  return(theme)
+  return(elements)
 }
