@@ -2,12 +2,13 @@
 % Please edit documentation in R/ggboule.R
 \name{ggboule}
 \alias{ggboule}
-\title{Create a ggplot with image overlay on bars}
+\title{Create a ggplot with image overlay on bars or histograms}
 \usage{
 ggboule(
   data,
   mapping = aes(),
   image_path = system.file("extdata/boule.png", package = "clessnize"),
+  geom = "bar",
   ...
 )
 }
@@ -16,13 +17,15 @@ ggboule(
 
 \item{mapping}{Default list of aesthetic mappings to use for plot}
 
-\item{image_path}{The path to the image to overlay on bars}
+\item{image_path}{The path to the image to overlay on bars or histograms}
+
+\item{geom}{The type of plot: "bar" or "hist"}
 
 \item{...}{Other arguments passed to ggplot}
 }
 \value{
-A ggplot object with the image overlay on bars
+A ggplot object with the image overlay on bars or histograms
 }
 \description{
-Create a ggplot with image overlay on bars
+Create a ggplot with image overlay on bars or histograms
 }
