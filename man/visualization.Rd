@@ -63,6 +63,10 @@ theme_clean_dark(
 \item{strip_colour}{strip background colour}
 
 \item{boule}{If TRUE, fills the bars with a PNG image instead of color}
+
+\item{data}{The data frame to use for the plot}
+
+\item{plot}{The ggplot object to modify}
 }
 \value{
 A ggplot2 theme or a ggplot2 plot.

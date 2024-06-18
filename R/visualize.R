@@ -13,6 +13,8 @@
 #' @param half_line half line
 #' @param base_margin base margin
 #' @param boule If TRUE, fills the bars with a PNG image instead of color
+#' @param data The data frame to use for the plot
+#' @param plot The ggplot object to modify
 #' @return A ggplot2 theme or a ggplot2 plot.
 #' @details
 #' \describe{
