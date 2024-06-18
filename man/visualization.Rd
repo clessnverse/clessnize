@@ -16,7 +16,8 @@ theme_clean_light(
   secondary_colour = "grey30",
   minor_colour = "#f7f7f7",
   bg_colour = "white",
-  strip_colour = "white"
+  strip_colour = "white",
+  boule = FALSE
 )
 
 theme_clean_dark(
@@ -30,7 +31,8 @@ theme_clean_dark(
   secondary_colour = "#f2f2f2",
   minor_colour = "#525252",
   bg_colour = "#494949",
-  strip_colour = "grey80"
+  strip_colour = "grey80",
+  boule = FALSE
 )
 }
 \arguments{
@@ -84,12 +86,9 @@ p  <- ggplot2::ggplot(data = ggplot2::mpg) +
    caption = "Data: API Twitter \nCLESSN"
  ) +
  ggplot2::xlab("x axis label") +
-ggplot2::ylab("y axis label")
+ ggplot2::ylab("y axis label")
 
 p + theme_clean_light()
 p + theme_clean_dark()
 }
-}
-\author{
-Judith Bourque
 }

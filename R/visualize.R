@@ -46,6 +46,8 @@
 #' @importFrom ggplot2 element_text
 #' @importFrom ggplot2 element_blank
 #' @importFrom ggplot2 margin
+#' @importFrom grid rasterGrob
+#' @importFrom png readPNG
 NULL
 
 #' @export
@@ -103,11 +105,11 @@ theme_clean_light <- function(base_size = 11,
   # Conditionally add background image
   if (boule) {
     boule_image_path <- system.file("extdata/boule.png", package = "clessnize")
-    boule_image <- readPNG(boule_image_path)
-    boule_grob <- rasterGrob(boule_image, width = unit(1, "npc"), height = unit(1, "npc"), interpolate = TRUE)
+    boule_image <- png::readPNG(boule_image_path)
+    boule_grob <- grid::rasterGrob(boule_image, width = grid::unit(1, "npc"), height = grid::unit(1, "npc"), interpolate = TRUE)
     
-    theme <- theme +
-      annotation_custom(boule_grob, xmin = -Inf, xmax = Inf, ymin = -Inf, ymax = Inf)
+    # Add annotation_custom to the plot
+    theme <- theme + ggplot2::annotation_custom(boule_grob, xmin = -Inf, xmax = Inf, ymin = -Inf, ymax = Inf)
   }
   
   return(theme)
@@ -168,11 +170,11 @@ theme_clean_dark <- function(base_size = 11,
   # Conditionally add background image
   if (boule) {
     boule_image_path <- system.file("extdata/boule.png", package = "clessnize")
-    boule_image <- readPNG(boule_image_path)
-    boule_grob <- rasterGrob(boule_image, width = unit(1, "npc"), height = unit(1, "npc"), interpolate = TRUE)
+    boule_image <- png::readPNG(boule_image_path)
+    boule_grob <- grid::rasterGrob(boule_image, width = grid::unit(1, "npc"), height = grid::unit(1, "npc"), interpolate = TRUE)
     
-    theme <- theme +
-      annotation_custom(boule_grob, xmin = -Inf, xmax = Inf, ymin = -Inf, ymax = Inf)
+    # Add annotation_custom to the plot
+    theme <- theme + ggplot2::annotation_custom(boule_grob, xmin = -Inf, xmax = Inf, ymin = -Inf, ymax = Inf)
   }
   
   return(theme)
