@@ -60,7 +60,7 @@ NULL
 add_png_fill <- function(plot, data, image) {
   for (i in 1:nrow(data)) {
     plot <- plot + annotation_custom(
-      rasterGrob(image, width = unit(1, "npc"), height = unit(data$n[i] / max(data$n), "npc"), interpolate = TRUE),
+      rasterGrob(image, width = unit(1, "npc"), height = unit(1, "npc"), interpolate = TRUE),
       xmin = i - 0.5, xmax = i + 0.5, ymin = 0, ymax = data$n[i]
     )
   }
