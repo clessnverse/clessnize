@@ -12,7 +12,7 @@
 #' @param strip_colour strip background colour
 #' @param half_line half line
 #' @param base_margin base margin
-#' @return A list containing a ggplot2 theme and, optionally, an annotation.
+#' @return A ggplot2 theme.
 #' @details
 #' \describe{
 #'
@@ -123,10 +123,10 @@ theme_clean_light <- function(base_size = 11,
   if (boule) {
     boule_image_path <- system.file("extdata/boule.png", package = "clessnize")
     boule_image <- png::readPNG(boule_image_path)
-    theme <- list(theme, function(plot) add_png_fill(plot, issue_counts, boule_image))
+    list(theme, function(plot) add_png_fill(plot, issue_counts, boule_image))
+  } else {
+    list(theme)
   }
-  
-  return(theme)
 }
 
 #' @export
@@ -185,8 +185,8 @@ theme_clean_dark <- function(base_size = 11,
   if (boule) {
     boule_image_path <- system.file("extdata/boule.png", package = "clessnize")
     boule_image <- png::readPNG(boule_image_path)
-    theme <- list(theme, function(plot) add_png_fill(plot, issue_counts, boule_image))
+    list(theme, function(plot) add_png_fill(plot, issue_counts, boule_image))
+  } else {
+    list(theme)
   }
-  
-  return(theme)
 }
