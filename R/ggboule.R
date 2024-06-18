@@ -30,18 +30,11 @@ ggboule <- function(data, mapping = aes(), image_path = system.file("extdata/bou
   # Create the base ggplot object
   plot <- ggplot2::ggplot(data, mapping, ...)
   
-  # Check if the plot contains geom_bar
-  layers <- lapply(plot$layers, function(layer) {
-    if (inherits(layer$geom, "GeomBar")) {
-      return(TRUE)
-    }
-    return(FALSE)
-  })
+  # Add geom_bar to the plot
+  plot <- plot + ggplot2::geom_bar(stat = "identity", fill = NA, color = "black")
   
-  if (any(unlist(layers))) {
-    # Apply the image overlay if geom_bar is present
-    plot <- add_image_bars(plot, data, image_path)
-  }
+  # Apply the image overlay
+  plot <- add_image_bars(plot, data, image_path)
   
   return(plot)
 }
