@@ -11,7 +11,7 @@ check_fonts_access <- function() {
   results <- sapply(font_paths, function(path) if (path == "") "Not found" else "Found")
   
   # Créer un message récapitulatif
-  message <- paste(names(results), ":", results, collapse = "\n")
+  message <- paste(names(results), ":", results, collapse = " ; ")
   
   return(message)
 }
