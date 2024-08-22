@@ -67,7 +67,7 @@ draw_datagotchi_node <- function(
     labs(
       title = label
     ) +
-    theme_datagotchi_light() +
+    theme_datagotchi_light(base_size = 10) +
     theme(
       axis.title.x = element_blank(),
       axis.title.y = element_blank(),
@@ -75,7 +75,8 @@ draw_datagotchi_node <- function(
       axis.text.y = element_blank(),
       axis.ticks.x = element_blank(),
       axis.ticks.y = element_blank(),
-      panel.grid = element_blank(),
+      panel.grid.major.x = element_blank(),
+      panel.grid.major.y = element_blank(),
       plot.background = element_rect(fill = NA, color = NA),
       plot.title = element_text(hjust = 0.5),
       legend.position = "none"
@@ -93,7 +94,7 @@ draw_datagotchi_node <- function(
     annotate(
       geom = "rect",
       xmin = -0.122, xmax = -0.053, ymin = 0, ymax = 100,
-      fill = "white", color = "grey", linetype = "dashed" 
+      fill = NA, color = "grey", linetype = "dashed" 
     ) +
     annotate(
       geom = "rect",
