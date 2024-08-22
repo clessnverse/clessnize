@@ -67,7 +67,7 @@ draw_datagotchi_node <- function(
     labs(
       title = label
     ) +
-    theme_minimal() +
+    theme_datagotchi_light() +
     theme(
       axis.title.x = element_blank(),
       axis.title.y = element_blank(),
