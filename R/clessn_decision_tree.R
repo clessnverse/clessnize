@@ -37,7 +37,7 @@ draw_datagotchi_node <- function(
 ) {
   if (is.null(label)){
     label <- ""
-    left_lab <- "",
+    left_lab <- ""
     right_lab <- ""
   }
   # Calcul des pourcentages
