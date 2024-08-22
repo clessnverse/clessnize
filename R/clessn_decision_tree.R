@@ -85,32 +85,26 @@ draw_datagotchi_node <- function(
     annotate(
       "text", x = 0.5, y = -10,
       label = left_lab, hjust = 1,
-      size = 5, angle = 90, family = "PixelOperatorSC"
+      size = 10, angle = 90, family = "PixelOperatorSC"
     ) +
     annotate(
       "text", x = 0.5, y = 110, 
       label = right_lab, hjust = 1,
-      size = 5, angle = 90, family = "PixelOperatorSC"
+      size = 10, angle = 90, family = "PixelOperatorSC"
     ) +
     annotate(
       geom = "rect",
-      xmin = -0.122, xmax = -0.053, ymin = 0, ymax = 100,
-      fill = NA, color = "grey", linetype = "dashed",
-      stroke = 0.5
-    ) +
-    annotate(
-      geom = "rect",
-      xmin = -0.125, xmax = -0.05, ymin = 0, ymax = node_proportion * 100, fill = "black"
+      xmin = -0.2, xmax = -0.1, ymin = 0, ymax = node_proportion * 100, fill = "black"
     ) +
     annotate(
       "text",
-      x = -0.0875, y = node_proportion * 100 + 3, hjust = 0.5,
-      label = paste0(round(node_proportion * 100), "\n% of sample"),
+      x = -0.15, y = node_proportion * 100 + 3, hjust = 0.5,
+      label = paste0(round(node_proportion * 100), "% of sample"),
       family = "PixelOperatorSC"
     ) +
     annotate(
-      "text", x = -0.2, y = 50, label = paste(max_group, round(pcts[max_group]), "%"),
-      hjust = 0.5, size = 5, color = max_color, fontface = "bold",
+      "text", x = -0.3, y = 50, label = paste(max_group, round(pcts[max_group]), "%"),
+      hjust = 0.5, size = 20, color = max_color, fontface = "bold",
       family = "PixelOperatorSC"
     )  
   return(plot)
