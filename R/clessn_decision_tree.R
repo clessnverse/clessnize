@@ -39,14 +39,14 @@ draw_datagotchi_node <- function(
   pct_independant <- pred_independant * 100
   pct_republican <- pred_republican * 100
   # Déterminer le groupe le plus nombreux
-  pcts <- c(pct_democrat, pct_independant, pct_republican)
+  pcts <- c("DEMOCRAT" = pct_democrat, "INDEPENDANT" = pct_independant, "REPUBLICAN" = pct_republican)
   max_group <- ifelse(
     pct_democrat == max(pcts),
     "DEMOCRAT",
     ifelse(
       pct_republican == max(pcts),
       "REPUBLICAN",
-      "INDEPENDENT")
+      "INDEPENDANT")
     )
   # Déterminer la couleur du groupe avec le pourcentage le plus élevé
   max_color <- ifelse(max_group == "DEMOCRAT", "#00AEF3",
@@ -54,7 +54,7 @@ draw_datagotchi_node <- function(
   # Créer un dataframe pour ggplot
   data <- data.frame(
     x = c(1, 1, 1),
-    category = c("DEMOCRAT", "INDEPENDENT", "REPUBLICAN"),
+    category = c("DEMOCRAT", "INDEPENDANT", "REPUBLICAN"),
     start = c(0, pct_democrat, pct_democrat + pct_independant),
     end = c(pct_democrat, pct_democrat + pct_independant, 100)
   )
@@ -62,7 +62,7 @@ draw_datagotchi_node <- function(
   plot <- ggplot(data) +
     geom_rect(aes(xmin = 0, xmax = 1,
                   ymin = start, ymax = end, fill = category)) +
-    scale_fill_manual(values = c("DEMOCRAT" = "#00AEF3", "INDEPENDENT" = "lightgray", "REPUBLICAN" = "#E81B23")) +
+    scale_fill_manual(values = c("DEMOCRAT" = "#00AEF3", "INDEPENDANT" = "lightgray", "REPUBLICAN" = "#E81B23")) +
     coord_flip() +
     labs(
       title = label
@@ -96,7 +96,7 @@ draw_datagotchi_node <- function(
       x = -0.0875, y = node_proportion * 100, hjust = -0.1, label = paste0(round(node_proportion * 100), "% of sample")
     ) +
     annotate(
-      "text", x = -0.2, y = 50, label = paste(max_group, round(max_pct), "%"),
+      "text", x = -0.2, y = 50, label = paste(max_group, round(pcts[max_group]), "%"),
       hjust = 0.5, size = 5, color = max_color, fontface = "bold"
     )  
   return(plot)
