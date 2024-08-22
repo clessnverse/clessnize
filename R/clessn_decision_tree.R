@@ -35,6 +35,11 @@ draw_datagotchi_node <- function(
   right_lab,
   base_size = 20
 ) {
+  if (is.null(label)){
+    label <- ""
+    left_lab <- "",
+    right_lab <- ""
+  }
   # Calcul des pourcentages
   pct_democrat <- pred_democrat * 100
   pct_independant <- pred_independant * 100
