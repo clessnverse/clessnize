@@ -32,7 +32,8 @@ draw_datagotchi_node <- function(
   node_proportion,
   label,
   left_lab,
-  right_lab
+  right_lab,
+  base_size = 20
 ) {
   # Calcul des pourcentages
   pct_democrat <- pred_democrat * 100
@@ -67,7 +68,7 @@ draw_datagotchi_node <- function(
     labs(
       title = label
     ) +
-    theme_datagotchi_light(base_size = 10) +
+    theme_datagotchi_light(base_size = base_size) +
     theme(
       axis.title.x = element_blank(),
       axis.title.y = element_blank(),
@@ -94,7 +95,8 @@ draw_datagotchi_node <- function(
     annotate(
       geom = "rect",
       xmin = -0.122, xmax = -0.053, ymin = 0, ymax = 100,
-      fill = NA, color = "grey", linetype = "dashed" 
+      fill = NA, color = "grey", linetype = "dashed",
+      stroke = 0.5
     ) +
     annotate(
       geom = "rect",
@@ -102,7 +104,7 @@ draw_datagotchi_node <- function(
     ) +
     annotate(
       "text",
-      x = -0.0875, y = node_proportion * 100, hjust = -0.1,
+      x = -0.0875, y = node_proportion * 100 + 3, hjust = 0.5,
       label = paste0(round(node_proportion * 100), "\n% of sample"),
       family = "PixelOperatorSC"
     ) +

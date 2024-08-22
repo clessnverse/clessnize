@@ -11,7 +11,8 @@ draw_datagotchi_node(
   node_proportion,
   label,
   left_lab,
-  right_lab
+  right_lab,
+  base_size = 20
 )
 }
 \arguments{
