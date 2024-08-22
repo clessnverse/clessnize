@@ -6,8 +6,8 @@ Title: Data Visualization Tools for the CLESSN research group
 Authors@R: 
     c(
         person("Laurence-Olivier", "M. Foisy", email = "lomf0@ulaval.ca", role = c("aut", "cre")),
-        person("Hubert", "Cadieux", email = "hubert.cadieux.1@ulaval.ca", role = c("aut")),
-        person("Judith", "Bourque", role = c("aut")))
+        person("Hubert", "Cadieux", email = "hubert.cadieux.1@ulaval.ca", role = "ctb"),
+        person("Judith", "Bourque", role = "ctb"))
 Description: Provides a set of tools and themes for enhancing data visualization within the company, leveraging ggplot2. Currently, it includes themes for clean light and dark visualizations, with plans for further expansion.
 Depends:
     R (>= 3.5.0),
