@@ -106,3 +106,19 @@ theme_datagotchi_light <- function(base_size = 11,
       strip.background = ggplot2::element_blank()
     )
 }
+
+#' Datagotchi Green Light
+#'
+#' A color code for the Datagotchi theme.
+#'
+#' @return A character string representing the color code "#1BF640".
+#' @export
+datagotchi_green_light <- "#1BF640"
+
+#' Datagotchi Green Dark
+#' 
+#' A color code for the Datagotchi theme.
+#' 
+#' @return A character string representing the color code "#26E92E".
+#' @export
+datagotchi_green_dark <- "#26E92E"
