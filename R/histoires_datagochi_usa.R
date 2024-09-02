@@ -107,22 +107,6 @@ theme_datagotchi_light <- function(base_size = 11,
     )
 }
 
-#' Datagotchi Green Light
-#'
-#' A color code for the Datagotchi theme.
-#'
-#' @return A character string representing the color code "#1BF640".
-#' @export
-datagotchi_green_light <- "#1BF640"
-
-#' Datagotchi Green Dark
-#' 
-#' A color code for the Datagotchi theme.
-#' 
-#' @return A character string representing the color code "#26E92E".
-#' @export
-datagotchi_green_dark <- "#26E92E"
-
 #' Theme Datagotchi Dark
 #'
 #' A custom ggplot2 theme that applies the PixelOperatorSC or WebFont fonts,
@@ -214,3 +198,30 @@ strip.background = ggplot2::element_blank()
 ) 
 
 }
+
+
+#' Datagotchi Green Light
+#'
+#' A color code for the Datagotchi theme.
+#'
+#' @return A character string representing the color code "#1BF640".
+#' @export
+datagotchi_green_light <- "#1BF640"
+
+#' Datagotchi Green Dark
+#' 
+#' A color code for the Datagotchi theme.
+#' 
+#' @return A character string representing the color code "#26E92E".
+#' @export
+datagotchi_green_dark <- "#26E92E"
+
+#' Party Colors
+#'
+#' A named vector containing the colors associated with the USA political parties (2024).
+#'
+#' @format A named character vector with color codes.
+#' @export
+party_colors <- c("democrat" = "#0076CE",
+                  "republican" = "#FF0000",
+                  "rfk" = "#FFD700")
