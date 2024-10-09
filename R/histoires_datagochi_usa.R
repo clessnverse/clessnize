@@ -225,3 +225,45 @@ datagotchi_green_dark <- "#26E92E"
 party_colors <- c("democrat" = "#0076CE",
                   "republican" = "#FF0000",
                   "rfk" = "#FFD700")
+#' Add Datagotchi Logo to a ggplot
+#'
+#' This function overlays the Datagotchi logo onto a ggplot using the `cowplot` package.
+#' The logo is placed as an image on top of the existing plot.
+#'
+#' @param plot A `ggplot` object. The plot to which the logo will be added.
+#' @param logo_url A character string specifying the URL of the logo image. 
+#'        Defaults to "https://raw.githubusercontent.com/clessn/img/refs/heads/main/Logo.PNG".
+#' @param logo_width A numeric value specifying the width of the logo. Defaults to 0.1.
+#' @param x_pos A numeric value for the x position of the logo. Defaults to 1 (right edge of the plot).
+#' @param y_pos A numeric value for the y position of the logo. Defaults to 0 (bottom edge of the plot).
+#' @param hjust Horizontal justification of the logo. Defaults to 1 (right-aligned).
+#' @param vjust Vertical justification of the logo. Defaults to 0 (bottom-aligned).
+#'
+#' @return A `ggplot` object with the logo added.
+#' @export
+#'
+#' @examples
+#' library(ggplot2)
+#' library(cowplot)
+#' p <- ggplot(mtcars, aes(mpg, wt)) + geom_point()
+#' add_datagotchi_logo(p)
+#'
+#' # Adjust the logo position and size
+#' add_datagotchi_logo(p, logo_width = 0.15, x_pos = 0.95, y_pos = 0.05)
+add_datagotchi_logo <- function(plot, 
+                                logo_url = "https://raw.githubusercontent.com/clessn/img/refs/heads/main/Logo.PNG", 
+                                logo_width = 0.1, 
+                                x_pos = 1, y_pos = 0, 
+                                hjust = 1, vjust = 0) {
+  # Create the logo as a ggdraw object
+  logo <- cowplot::ggdraw() +
+    cowplot::draw_image(logo_url, x = x_pos, y = y_pos, 
+                        hjust = hjust, vjust = vjust, 
+                        width = logo_width)
+  
+  # Combine the original plot and the logo
+  combined_plot <- cowplot::ggdraw(plot) + 
+    cowplot::draw_plot(logo)
+  
+  return(combined_plot)
+}
