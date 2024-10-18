@@ -225,35 +225,92 @@ datagotchi_green_dark <- "#26E92E"
 party_colors <- c("democrat" = "#0076CE",
                   "republican" = "#FF0000",
                   "rfk" = "#FFD700")
-#' Add Datagotchi Logo to a ggplot
+#' Add a logo to a ggplot
 #'
-#' This function overlays the Datagotchi logo onto a ggplot using the `cowplot` package.
-#' The logo is placed as an image on top of the existing plot.
+#' This function takes a ggplot object, adds a logo to it, and saves the result as a PNG file.
 #'
-#' @param plot A `ggplot` object. The plot to which the logo will be added.
-#' @param logo_url A character string specifying the URL of the logo image. 
-#'        Defaults to "https://raw.githubusercontent.com/clessn/img/refs/heads/main/Logo.PNG".
-#' @param logo_width A numeric value specifying the width of the logo. Defaults to 0.1.
-#' @param x_pos A numeric value for the x position of the logo. Defaults to 1 (right edge of the plot).
-#' @param y_pos A numeric value for the y position of the logo. Defaults to 0 (bottom edge of the plot).
-#' @param hjust Horizontal justification of the logo. Defaults to 1 (right-aligned).
-#' @param vjust Vertical justification of the logo. Defaults to 0 (bottom-aligned).
+#' @param plot A ggplot object to which the logo will be added.
+#' @param logo_path A character string specifying the path or URL of the logo image. 
+#' Default is `"https://raw.githubusercontent.com/clessn/img/refs/heads/main/Logo.PNG"`.
+#' @param output_path A character string specifying the file path for saving the output plot with the logo. 
+#' Default is `"plot_with_logo.png"`.
+#' @param logo_width A numeric value specifying the width of the logo as a proportion of the plot width. 
+#' Default is `0.1`.
+#' @param logo_position A character string specifying the position of the logo. 
+#' Accepts `"topright"`, `"topleft"`, `"bottomright"`, or `"bottomleft"`. Default is `"topright"`.
+#' @param margin A numeric value specifying the margin between the logo and the plot edges as a proportion of the plot width. 
+#' Default is `0.01`.
 #'
-#' @return A `ggplot` object with the logo added.
-#' @export
-#'
+#' @return A character string representing the path of the saved image file.
+#' 
+#' @details This function saves the provided ggplot as a temporary PNG file, reads both the plot and the logo, 
+#' resizes the logo, calculates its position on the plot, and overlays the logo. The final image is saved 
+#' as a PNG file to the specified output path.
+#' 
 #' @examples
+#' \dontrun{
 #' library(ggplot2)
-#' library(cowplot)
-#' p <- ggplot(mtcars, aes(mpg, wt)) + geom_point()
-#' add_datagotchi_logo(p)
+#' plot <- ggplot(mtcars, aes(mpg, hp)) + geom_point()
+#' add_logo_to_plot(plot, logo_path = "logo.png", output_path = "plot_with_logo.png")
+#' }
 #'
-#' # Adjust the logo position and size
-#' add_datagotchi_logo(p, logo_width = 0.15, x_pos = 0.95, y_pos = 0.05)
-add_datagotchi_logo <- function(plot, 
-                                logo_url = "https://raw.githubusercontent.com/clessn/img/refs/heads/main/Logo.PNG", 
-                                logo_width = 0.1, 
-                                x_pos = 1, y_pos = 0, 
+#' @import ggplot2
+#' @import magick
+#' @export
+add_logo_to_plot <- function(plot,
+                             logo_path = "https://raw.githubusercontent.com/clessn/img/refs/heads/main/Logo.PNG",
+                             output_path = "plot_with_logo.png",
+                             logo_width = 0.1,
+                             logo_position = "topright",
+                             margin = 0.01) {
+  # Save the ggplot as a PNG file
+  ggsave("temp_plot.png", plot, width = 12, height = 8, dpi = 300)
+
+  # Read the plot and logo images
+  plot_img <- image_read("temp_plot.png")
+  logo_img <- image_read(logo_path)
+
+  # Get dimensions
+  plot_width <- image_info(plot_img)$width
+  plot_height <- image_info(plot_img)$height
+
+  # Resize logo
+  logo_new_width <- as.integer(plot_width * logo_width)
+  logo_img <- image_resize(logo_img, paste0(logo_new_width, "x"))
+
+  # Calculate position
+  margin_px <- as.integer(plot_width * margin)
+  logo_info <- image_info(logo_img)
+
+  if (logo_position == "topright") {
+    x_pos <- plot_width - logo_info$width - margin_px
+    y_pos <- margin_px
+  } else if (logo_position == "topleft") {
+    x_pos <- margin_px
+    y_pos <- margin_px
+  } else if (logo_position == "bottomright") {
+    x_pos <- plot_width - logo_info$width - margin_px
+    y_pos <- plot_height - logo_info$height - margin_px
+  } else if (logo_position == "bottomleft") {
+    x_pos <- margin_px
+    y_pos <- plot_height - logo_info$height - margin_px
+  } else {
+    stop("Invalid logo_position. Use 'topright', 'topleft', 'bottomright', or 'bottomleft'.")
+  }
+
+  # Add logo to the plot
+  plot_with_logo <- image_composite(plot_img, logo_img, offset = paste0("+", x_pos, "+", y_pos))
+
+  # Save the final image
+  image_write(plot_with_logo, path = output_path)
+
+  # Remove temporary file
+  file.remove("temp_plot.png")
+
+  # Return the path of the saved image
+  return(output_path)
+}
+ = 1, y_pos = 0, 
                                 hjust = 1, vjust = 0) {
   # Create the logo as a ggdraw object
   logo <- cowplot::ggdraw() +
