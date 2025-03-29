@@ -6,7 +6,7 @@
 \usage{
 ggboule(
   data,
-  mapping = aes(),
+  mapping = ggplot2::aes(),
   image_path = system.file("extdata/boule.png", package = "clessnize"),
   geom = "bar",
   ...

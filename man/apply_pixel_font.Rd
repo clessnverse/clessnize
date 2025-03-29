@@ -16,24 +16,3 @@ A plot with Pixel Operator font applied to all text elements
 This function ensures that all text elements in a ggplot or patchwork object
 use the Pixel Operator font family.
 }
-\examples{
-\dontrun{
-library(ggplot2)
-library(patchwork)
-
-# Create a basic plot
-p1 <- ggplot(mtcars, aes(x = mpg, y = hp)) +
-  geom_point() +
-  labs(title = "MPG vs Horsepower")
-
-p2 <- ggplot(mtcars, aes(x = wt, y = hp)) +
-  geom_point() +
-  labs(title = "Weight vs Horsepower")
-
-# Combine plots with patchwork
-combined_plots <- p1 + p2
-
-# Apply Pixel Operator font to all text elements
-pixel_plots <- apply_pixel_font(combined_plots)
-}
-}
