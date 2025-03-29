@@ -282,20 +282,20 @@ add_logo_to_plot <- function(plot,
   ggsave("temp_plot.png", plot, width = 12, height = 8, dpi = 300)
 
   # Read the plot and logo images
-  plot_img <- image_read("temp_plot.png")
-  logo_img <- image_read(logo_path)
+  plot_img <- magick::image_read("temp_plot.png")
+  logo_img <- magick::image_read(logo_path)
 
   # Get dimensions
-  plot_width <- image_info(plot_img)$width
-  plot_height <- image_info(plot_img)$height
+  plot_width <- magick::image_info(plot_img)$width
+  plot_height <- magick::image_info(plot_img)$height
 
   # Resize logo
   logo_new_width <- as.integer(plot_width * logo_width)
-  logo_img <- image_resize(logo_img, paste0(logo_new_width, "x"))
+  logo_img <- magick::image_resize(logo_img, paste0(logo_new_width, "x"))
 
   # Calculate position
   margin_px <- as.integer(plot_width * margin)
-  logo_info <- image_info(logo_img)
+  logo_info <- magick::image_info(logo_img)
 
   if (logo_position == "topright") {
     x_pos <- plot_width - logo_info$width - margin_px
@@ -314,10 +314,10 @@ add_logo_to_plot <- function(plot,
   }
 
   # Add logo to the plot
-  plot_with_logo <- image_composite(plot_img, logo_img, offset = paste0("+", x_pos, "+", y_pos))
+  plot_with_logo <- magick::image_composite(plot_img, logo_img, offset = paste0("+", x_pos, "+", y_pos))
 
   # Save the final image
-  image_write(plot_with_logo, path = output_path)
+  magick::image_write(plot_with_logo, path = output_path)
 
   # Remove temporary file
   file.remove("temp_plot.png")

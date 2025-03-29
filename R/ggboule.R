@@ -39,7 +39,7 @@ add_image_bars <- function(plot, data, image_path, geom) {
 #' @param ... Other arguments passed to ggplot
 #' @return A ggplot object with the image overlay on bars or histograms
 #' @export
-ggboule <- function(data, mapping = aes(), image_path = system.file("extdata/boule.png", package = "clessnize"), geom = "bar", ...) {
+ggboule <- function(data, mapping = ggplot2::aes(), image_path = system.file("extdata/boule.png", package = "clessnize"), geom = "bar", ...) {
   # Create the base ggplot object
   plot <- ggplot2::ggplot(data, mapping, ...)
   

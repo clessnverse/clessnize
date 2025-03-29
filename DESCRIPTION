@@ -14,7 +14,14 @@ Depends:
     ggplot2
 Imports:
     sysfonts,
-    showtext
+    showtext,
+    magick,
+    scales,
+    dplyr,
+    patchwork,
+    rlang,
+    png,
+    grid
 Suggests:
     testthat
 License: MIT
