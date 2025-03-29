@@ -76,33 +76,39 @@ theme_datagotchi_light <- function(base_size = 11,
   ggplot2::theme_classic() +
     ggplot2::theme(
       text = ggplot2::element_text(size = base_size, family = base_family, colour = secondary_colour),
-      axis.text = ggplot2::element_text(colour = secondary_colour),
+      axis.text = ggplot2::element_text(colour = secondary_colour, family = base_family),
       axis.ticks.x = ggplot2::element_blank(),
       axis.ticks.y = ggplot2::element_blank(),
       axis.line.y = ggplot2::element_blank(),
       axis.title.x = ggplot2::element_text(
         margin = ggplot2::margin(r = half_line, t = half_line),
-        hjust = 0.5
+        hjust = 0.5,
+        family = base_family
       ),
       axis.title.y = ggplot2::element_text(
         margin = ggplot2::margin(r = half_line, b = half_line),
-        hjust = 0.5
+        hjust = 0.5,
+        family = base_family
       ),
       axis.line.x = ggplot2::element_blank(),
       legend.position = "bottom",
-      legend.title = ggplot2::element_blank(),
+      legend.title = ggplot2::element_text(family = base_family),
+      legend.text = ggplot2::element_text(family = base_family),
       legend.background = ggplot2::element_rect(fill = NA),
       panel.grid.major.y = ggplot2::element_line(colour = minor_colour),
-      plot.caption = ggplot2::element_text(hjust = 0, face = "italic"),
+      plot.caption = ggplot2::element_text(hjust = 0, face = "italic", family = base_family),
+      plot.subtitle = ggplot2::element_text(family = base_family),
       plot.title = ggplot2::element_text(
         face = "bold",
         colour = primary_colour,
         size = base_size * 1.5,
-        hjust = 0.5
+        hjust = 0.5,
+        family = base_family
       ),
       plot.background = ggplot2::element_rect(fill = bg_colour, colour = bg_colour),
       panel.background = ggplot2::element_rect(fill = NA),
-      strip.background = ggplot2::element_blank()
+      strip.background = ggplot2::element_blank(),
+      strip.text = ggplot2::element_text(family = base_family)
     )
 }
 
@@ -167,33 +173,39 @@ theme_datagotchi_dark <- function(
   ggplot2::theme_classic() +
     ggplot2::theme(
       text = ggplot2::element_text(size = base_size, family = base_family, colour = secondary_colour),
-      axis.text = ggplot2::element_text(colour = secondary_colour),
+      axis.text = ggplot2::element_text(colour = secondary_colour, family = base_family),
       axis.ticks.x = ggplot2::element_blank(),
       axis.ticks.y = ggplot2::element_blank(),
       axis.line.y = ggplot2::element_blank(),
       axis.title.x = ggplot2::element_text(
         margin = ggplot2::margin(r = half_line, t = half_line),
-        hjust = 0.5
+        hjust = 0.5,
+        family = base_family
       ),
       axis.title.y = ggplot2::element_text(
         margin = ggplot2::margin(r = half_line, b = half_line),
-        hjust = 0.5
+        hjust = 0.5,
+        family = base_family
       ),
       axis.line.x = ggplot2::element_blank(),
       legend.position = "bottom",
-      legend.title = ggplot2::element_blank(),
+      legend.title = ggplot2::element_text(family = base_family),
+      legend.text = ggplot2::element_text(family = base_family),
       legend.background = ggplot2::element_rect(fill = NA),
       panel.grid.major.y = ggplot2::element_line(colour = minor_colour),
-      plot.caption = ggplot2::element_text(hjust = 0, face = "italic"),
+      plot.caption = ggplot2::element_text(hjust = 0, face = "italic", family = base_family),
+      plot.subtitle = ggplot2::element_text(family = base_family),
       plot.title = ggplot2::element_text(
         face = "bold",
         colour = primary_colour,
         size = base_size * 1.5,
-        hjust = 0.5
+        hjust = 0.5,
+        family = base_family
       ),
       plot.background = ggplot2::element_rect(fill = bg_colour, colour = bg_colour),
       panel.background = ggplot2::element_rect(fill = NA),
-      strip.background = ggplot2::element_blank()
+      strip.background = ggplot2::element_blank(),
+      strip.text = ggplot2::element_text(family = base_family)
     )
 }
 
