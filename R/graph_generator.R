@@ -1,6 +1,5 @@
 library(dplyr)
 library(ggplot2)
-library(clessnize)
 library(scales)
 
 #' Create standardized data visualization graphs
@@ -48,13 +47,8 @@ create_standardized_graph <- function(
 ) {
   # Match the graph_type argument
   graph_type <- match.arg(graph_type)
-  # No need to manually source add_png.R as it's part of the package
-  # Just validate that add_multiple_pngs function is available
-  if (!exists("add_multiple_pngs", mode = "function")) {
-    if (!requireNamespace("clessnize", quietly = TRUE)) {
-      stop("The clessnize package is required but not available")
-    }
-  }
+  # We're inside the clessnize package, so functions should be available
+  # No need to check for them or load the package
   
   # Default party colors
   party_colors <- c(
@@ -254,7 +248,7 @@ create_standardized_graph <- function(
       fill = "",
       caption = caption_text
     ) +
-    clessnize::theme_datagotchi_light() +
+    theme_datagotchi_light() +
     theme(
       axis.text.x = element_text(angle = 0, hjust = 1, size = 52),
       axis.text.y = element_text(size = 52),
@@ -280,7 +274,7 @@ create_standardized_graph <- function(
     
     # Add logos if requested
     if (add_logo && !is.null(logos_list)) {
-      clessnize::add_multiple_pngs(
+      add_multiple_pngs(
         base_png_path = output_path,
         output_path = gsub("\\.png$", "_final.png", output_path),
         png_list = logos_list
