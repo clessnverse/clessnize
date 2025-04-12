@@ -10,7 +10,9 @@ library(scales)
 #' @param data Dataframe containing the data
 #' @param x_variable String with the name of the variable for the x-axis (default: "dv_voteChoice")
 #' @param fill_variable String with the name of the variable to use for fill colors
+#' @param weights_variable String with the name of the column containing weights (default: "weight")
 #' @param filter_values Optional vector of values to include from fill_variable
+#' @param x_filter_values Optional vector of values to include from x_variable
 #' @param language "fr" or "en" for output language
 #' @param colors Named vector with colors for each value in fill_variable
 #' @param fill_labels Named vector with display labels for each value in fill_variable
@@ -31,7 +33,9 @@ create_standardized_graph <- function(
   data,
   x_variable = "dv_voteChoice",
   fill_variable,
+  weights_variable = "weight",  # New parameter for custom weights column
   filter_values = NULL,
+  x_filter_values = NULL,
   language = "fr",
   colors = NULL,
   fill_labels = NULL,
@@ -84,14 +88,25 @@ create_standardized_graph <- function(
            "\nData weighted by gender, age, province, language, education level, income, immigration status, and housing type")
   }
   
+  # Check if weights column exists
+  if (!weights_variable %in% colnames(data)) {
+    stop(paste0("Weight column '", weights_variable, "' not found in data"))
+  }
+  
   # Filter and prepare data
   df_full <- data %>%
-    select(all_of(c(x_variable, fill_variable, "weight")))
+    select(all_of(c(x_variable, fill_variable, weights_variable)))
   
-  # Apply filter if provided
+  # Apply filter to fill variable if provided
   if (!is.null(filter_values)) {
     df_full <- df_full %>%
       filter(.data[[fill_variable]] %in% filter_values)
+  }
+  
+  # Apply filter to x variable if provided
+  if (!is.null(x_filter_values)) {
+    df_full <- df_full %>%
+      filter(.data[[x_variable]] %in% x_filter_values)
   }
   
   # Check if x_variable is party/vote choice
@@ -104,16 +119,16 @@ create_standardized_graph <- function(
     # Calculate national averages
     national_averages <- df_full %>%
       group_by(.data[[fill_variable]]) %>%
-      summarize(weighted_count = sum(weight, na.rm = TRUE)) %>%
+      summarize(weighted_count = sum(.data[[weights_variable]], na.rm = TRUE)) %>%
       mutate(national_pct = weighted_count / sum(weighted_count) * 100)
     
     # Calculate group-specific percentages
     group_stats <- df_full %>%
       filter(!is.na(.data[[x_variable]])) %>%
-      # Add party-specific filter if relevant
-      {if(is_party_graph) filter(., .data[[x_variable]] != "other") else .} %>%
+      # Add party-specific filter if relevant (and no custom x filter provided)
+      {if(is_party_graph && is.null(x_filter_values)) filter(., .data[[x_variable]] != "other") else .} %>%
       group_by(.data[[x_variable]], .data[[fill_variable]]) %>%
-      summarize(weighted_count = sum(weight, na.rm = TRUE), .groups = "drop") %>%
+      summarize(weighted_count = sum(.data[[weights_variable]], na.rm = TRUE), .groups = "drop") %>%
       group_by(.data[[x_variable]]) %>%
       mutate(group_pct = weighted_count / sum(weighted_count) * 100)
     
@@ -122,12 +137,6 @@ create_standardized_graph <- function(
       left_join(select(national_averages, {{ fill_variable }}, national_pct), 
                 by = fill_variable) %>%
       mutate(pct_diff_from_national = group_pct - national_pct)
-    
-    # Apply filter if provided
-    if (!is.null(filter_values)) {
-      plot_data <- plot_data %>%
-        filter(.data[[fill_variable]] %in% filter_values)
-    }
     
     # If x_variable is party choice, handle party mapping
     if (is_party_graph) {
@@ -178,10 +187,10 @@ create_standardized_graph <- function(
     # Calculate group-specific percentages
     plot_data <- df_full %>%
       filter(!is.na(.data[[x_variable]])) %>%
-      # Add party-specific filter if relevant
-      {if(is_party_graph) filter(., .data[[x_variable]] != "other") else .} %>%
+      # Add party-specific filter if relevant (and no custom x filter provided)
+      {if(is_party_graph && is.null(x_filter_values)) filter(., .data[[x_variable]] != "other") else .} %>%
       group_by(.data[[x_variable]], .data[[fill_variable]]) %>%
-      summarize(weighted_count = sum(weight, na.rm = TRUE), .groups = "drop") %>%
+      summarize(weighted_count = sum(.data[[weights_variable]], na.rm = TRUE), .groups = "drop") %>%
       group_by(.data[[x_variable]]) %>%
       mutate(group_pct = weighted_count / sum(weighted_count) * 100)
     
@@ -228,8 +237,12 @@ create_standardized_graph <- function(
     }
   }
   
-  # Apply color scale and labels if provided
+  # Apply color scale and labels
   if (!is.null(colors)) {
+    # Use fill_labels if provided, otherwise use names from colors
+    if(is.null(fill_labels)) {
+      fill_labels <- names(colors)
+    }
     p <- p + scale_fill_manual(values = colors, labels = fill_labels)
   }
   
