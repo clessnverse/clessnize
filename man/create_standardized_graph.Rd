@@ -9,7 +9,9 @@ create_standardized_graph(
   data,
   x_variable = "dv_voteChoice",
   fill_variable,
+  weights_variable = "weight",
   filter_values = NULL,
+  x_filter_values = NULL,
   language = "fr",
   colors = NULL,
   fill_labels = NULL,
@@ -35,7 +37,11 @@ create_standardized_graph(
 
 \item{fill_variable}{String with the name of the variable to use for fill colors}
 
+\item{weights_variable}{String with the name of the column containing weights (default: "weight")}
+
 \item{filter_values}{Optional vector of values to include from fill_variable}
+
+\item{x_filter_values}{Optional vector of values to include from x_variable}
 
 \item{language}{"fr" or "en" for output language}
 
