@@ -150,10 +150,9 @@ create_standardized_graph <- function(
       left_join(group_totals, by = x_variable) %>%
       mutate(group_pct = weighted_count / total_group_weight * 100)
     
-    # Create plot data with difference from national
-    join_by <- setNames(list(fill_variable), fill_variable)
+    # Create plot data with difference from national - FIXED JOIN SYNTAX
     plot_data <- group_stats %>%
-      left_join(select(national_averages, national_pct, !!sym(fill_variable)), by = join_by) %>%
+      left_join(national_averages, by = fill_variable) %>%
       mutate(pct_diff_from_national = group_pct - national_pct)
     
     # If x_variable is party choice, handle party mapping
