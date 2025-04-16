@@ -33,7 +33,7 @@ create_standardized_graph <- function(
   data,
   x_variable = "dv_voteChoice",
   fill_variable,
-  weights_variable = "weight",  # New parameter for custom weights column
+  weights_variable = "weight",  # Parameter for custom weights column
   filter_values = NULL,
   x_filter_values = NULL,
   language = "fr",
@@ -51,8 +51,6 @@ create_standardized_graph <- function(
 ) {
   # Match the graph_type argument
   graph_type <- match.arg(graph_type)
-  # We're inside the clessnize package, so functions should be available
-  # No need to check for them or load the package
   
   # Default party colors
   party_colors <- c(
@@ -93,20 +91,24 @@ create_standardized_graph <- function(
     stop(paste0("Weight column '", weights_variable, "' not found in data"))
   }
   
+  # Create a more direct reference to the weights column
+  # This is critical for proper weight column selection
+  data$.__weight_col__ <- data[[weights_variable]]
+  
   # Filter and prepare data
   df_full <- data %>%
-    select(all_of(c(x_variable, fill_variable, weights_variable)))
+    select(all_of(c(x_variable, fill_variable, ".__weight_col__")))
   
   # Apply filter to fill variable if provided
   if (!is.null(filter_values)) {
     df_full <- df_full %>%
-      filter(.data[[fill_variable]] %in% filter_values)
+      filter(!!sym(fill_variable) %in% filter_values)
   }
   
   # Apply filter to x variable if provided
   if (!is.null(x_filter_values)) {
     df_full <- df_full %>%
-      filter(.data[[x_variable]] %in% x_filter_values)
+      filter(!!sym(x_variable) %in% x_filter_values)
   }
   
   # Check if x_variable is party/vote choice
@@ -118,53 +120,56 @@ create_standardized_graph <- function(
     
     # Calculate national averages - CORRECTED
     df_national <- df_full %>%
-      filter(!is.na(.data[[fill_variable]]))
+      filter(!is.na(!!sym(fill_variable)))
     
-    total_national_weight <- sum(df_national[[weights_variable]], na.rm = TRUE)
+    total_national_weight <- sum(df_national$.__weight_col__, na.rm = TRUE)
     
     national_averages <- df_national %>%
-      group_by(.data[[fill_variable]]) %>%
-      summarize(weighted_count = sum(.data[[weights_variable]], na.rm = TRUE)) %>%
+      group_by(!!sym(fill_variable)) %>%
+      summarize(weighted_count = sum(.__weight_col__, na.rm = TRUE)) %>%
       mutate(national_pct = weighted_count / total_national_weight * 100)
     
     # Calculate group-specific percentages - CORRECTED
     df_groups <- df_full %>%
-      filter(!is.na(.data[[x_variable]])) %>%
-      filter(!is.na(.data[[fill_variable]])) %>%
-      # Add party-specific filter if relevant (and no custom x filter provided)
-      {if(is_party_graph && is.null(x_filter_values)) filter(., .data[[x_variable]] != "other") else .}
+      filter(!is.na(!!sym(x_variable))) %>%
+      filter(!is.na(!!sym(fill_variable)))
+    
+    # Add party-specific filter if relevant (and no custom x filter provided)
+    if(is_party_graph && is.null(x_filter_values)) {
+      df_groups <- df_groups %>% filter(!!sym(x_variable) != "other")
+    }
     
     # Calculate total weight for each x_variable group first
     group_totals <- df_groups %>%
-      group_by(.data[[x_variable]]) %>%
-      summarize(total_group_weight = sum(.data[[weights_variable]], na.rm = TRUE))
+      group_by(!!sym(x_variable)) %>%
+      summarize(total_group_weight = sum(.__weight_col__, na.rm = TRUE))
     
     group_stats <- df_groups %>%
-      group_by(.data[[x_variable]], .data[[fill_variable]]) %>%
-      summarize(weighted_count = sum(.data[[weights_variable]], na.rm = TRUE), .groups = "drop") %>%
+      group_by(!!sym(x_variable), !!sym(fill_variable)) %>%
+      summarize(weighted_count = sum(.__weight_col__, na.rm = TRUE), .groups = "drop") %>%
       left_join(group_totals, by = x_variable) %>%
       mutate(group_pct = weighted_count / total_group_weight * 100)
     
     # Create plot data with difference from national
+    join_by <- setNames(list(fill_variable), fill_variable)
     plot_data <- group_stats %>%
-      left_join(select(national_averages, {{ fill_variable }}, national_pct), 
-                by = fill_variable) %>%
+      left_join(select(national_averages, national_pct, !!sym(fill_variable)), by = join_by) %>%
       mutate(pct_diff_from_national = group_pct - national_pct)
     
     # If x_variable is party choice, handle party mapping
     if (is_party_graph) {
       # Replace party abbreviations
       plot_data <- plot_data %>%
-        mutate(dv_voteChoice = case_when(
-          dv_voteChoice %in% names(party_mapping[[language]]) ~ 
-            party_mapping[[language]][dv_voteChoice],
-          TRUE ~ as.character(dv_voteChoice)
+        mutate(!!sym(x_variable) := case_when(
+          !!sym(x_variable) %in% names(party_mapping[[language]]) ~ 
+            party_mapping[[language]][as.character(!!sym(x_variable))],
+          TRUE ~ as.character(!!sym(x_variable))
         ))
       
       # Set default order for party names (if x_order not specified)
       if (is.null(x_order)) {
-        plot_data$dv_voteChoice <- factor(plot_data$dv_voteChoice, 
-                                         levels = party_order[[language]])
+        plot_data[[x_variable]] <- factor(plot_data[[x_variable]], 
+                                        levels = party_order[[language]])
       }
     }
     
@@ -179,9 +184,9 @@ create_standardized_graph <- function(
     }
     
     # Create plot
-    p <- ggplot(plot_data, aes(x = .data[[x_variable]], 
+    p <- ggplot(plot_data, aes(x = !!sym(x_variable), 
                                y = pct_diff_from_national, 
-                               fill = .data[[fill_variable]])) +
+                               fill = !!sym(fill_variable))) +
       geom_bar(stat = "identity", position = "dodge") +
       geom_hline(yintercept = 0, linetype = "dashed", color = "black")
     
@@ -199,20 +204,23 @@ create_standardized_graph <- function(
     
     # First filter out NAs
     df_groups <- df_full %>%
-      filter(!is.na(.data[[x_variable]])) %>%
-      filter(!is.na(.data[[fill_variable]])) %>%
-      # Add party-specific filter if relevant (and no custom x filter provided)
-      {if(is_party_graph && is.null(x_filter_values)) filter(., .data[[x_variable]] != "other") else .}
+      filter(!is.na(!!sym(x_variable))) %>%
+      filter(!is.na(!!sym(fill_variable)))
+    
+    # Add party-specific filter if relevant (and no custom x filter provided)
+    if(is_party_graph && is.null(x_filter_values)) {
+      df_groups <- df_groups %>% filter(!!sym(x_variable) != "other")
+    }
     
     # Calculate total weight for each x_variable group
     group_totals <- df_groups %>%
-      group_by(.data[[x_variable]]) %>%
-      summarize(total_group_weight = sum(.data[[weights_variable]], na.rm = TRUE))
+      group_by(!!sym(x_variable)) %>%
+      summarize(total_group_weight = sum(.__weight_col__, na.rm = TRUE))
     
     # Calculate weighted percentages for each x_variable/fill_variable combination
     plot_data <- df_groups %>%
-      group_by(.data[[x_variable]], .data[[fill_variable]]) %>%
-      summarize(weighted_count = sum(.data[[weights_variable]], na.rm = TRUE), .groups = "drop") %>%
+      group_by(!!sym(x_variable), !!sym(fill_variable)) %>%
+      summarize(weighted_count = sum(.__weight_col__, na.rm = TRUE), .groups = "drop") %>%
       left_join(group_totals, by = x_variable) %>%
       mutate(group_pct = weighted_count / total_group_weight * 100)
     
@@ -220,16 +228,16 @@ create_standardized_graph <- function(
     if (is_party_graph) {
       # Replace party abbreviations
       plot_data <- plot_data %>%
-        mutate(dv_voteChoice = case_when(
-          dv_voteChoice %in% names(party_mapping[[language]]) ~ 
-            party_mapping[[language]][dv_voteChoice],
-          TRUE ~ as.character(dv_voteChoice)
+        mutate(!!sym(x_variable) := case_when(
+          !!sym(x_variable) %in% names(party_mapping[[language]]) ~ 
+            party_mapping[[language]][as.character(!!sym(x_variable))],
+          TRUE ~ as.character(!!sym(x_variable))
         ))
       
       # Set default order for party names (if x_order not specified)
       if (is.null(x_order)) {
-        plot_data$dv_voteChoice <- factor(plot_data$dv_voteChoice, 
-                                         levels = party_order[[language]])
+        plot_data[[x_variable]] <- factor(plot_data[[x_variable]], 
+                                        levels = party_order[[language]])
       }
     }
     
@@ -244,9 +252,9 @@ create_standardized_graph <- function(
     }
     
     # Create plot
-    p <- ggplot(plot_data, aes(x = .data[[x_variable]], 
+    p <- ggplot(plot_data, aes(x = !!sym(x_variable), 
                                y = group_pct, 
-                               fill = .data[[fill_variable]])) +
+                               fill = !!sym(fill_variable))) +
       geom_bar(stat = "identity", position = "dodge")
     
     # Default subtitle if not provided
