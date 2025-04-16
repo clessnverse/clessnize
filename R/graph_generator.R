@@ -116,21 +116,34 @@ create_standardized_graph <- function(
   if (graph_type == "difference") {
     # Difference from national average for each group
     
-    # Calculate national averages
-    national_averages <- df_full %>%
+    # Calculate national averages - CORRECTED
+    df_national <- df_full %>%
+      filter(!is.na(.data[[fill_variable]]))
+    
+    total_national_weight <- sum(df_national[[weights_variable]], na.rm = TRUE)
+    
+    national_averages <- df_national %>%
       group_by(.data[[fill_variable]]) %>%
       summarize(weighted_count = sum(.data[[weights_variable]], na.rm = TRUE)) %>%
-      mutate(national_pct = weighted_count / sum(weighted_count) * 100)
+      mutate(national_pct = weighted_count / total_national_weight * 100)
     
-    # Calculate group-specific percentages
-    group_stats <- df_full %>%
+    # Calculate group-specific percentages - CORRECTED
+    df_groups <- df_full %>%
       filter(!is.na(.data[[x_variable]])) %>%
+      filter(!is.na(.data[[fill_variable]])) %>%
       # Add party-specific filter if relevant (and no custom x filter provided)
-      {if(is_party_graph && is.null(x_filter_values)) filter(., .data[[x_variable]] != "other") else .} %>%
+      {if(is_party_graph && is.null(x_filter_values)) filter(., .data[[x_variable]] != "other") else .}
+    
+    # Calculate total weight for each x_variable group first
+    group_totals <- df_groups %>%
+      group_by(.data[[x_variable]]) %>%
+      summarize(total_group_weight = sum(.data[[weights_variable]], na.rm = TRUE))
+    
+    group_stats <- df_groups %>%
       group_by(.data[[x_variable]], .data[[fill_variable]]) %>%
       summarize(weighted_count = sum(.data[[weights_variable]], na.rm = TRUE), .groups = "drop") %>%
-      group_by(.data[[x_variable]]) %>%
-      mutate(group_pct = weighted_count / sum(weighted_count) * 100)
+      left_join(group_totals, by = x_variable) %>%
+      mutate(group_pct = weighted_count / total_group_weight * 100)
     
     # Create plot data with difference from national
     plot_data <- group_stats %>%
@@ -182,17 +195,26 @@ create_standardized_graph <- function(
     }
     
   } else if (graph_type == "percentage") {
-    # Percentages within each group
+    # Percentages within each group - CORRECTED
     
-    # Calculate group-specific percentages
-    plot_data <- df_full %>%
+    # First filter out NAs
+    df_groups <- df_full %>%
       filter(!is.na(.data[[x_variable]])) %>%
+      filter(!is.na(.data[[fill_variable]])) %>%
       # Add party-specific filter if relevant (and no custom x filter provided)
-      {if(is_party_graph && is.null(x_filter_values)) filter(., .data[[x_variable]] != "other") else .} %>%
+      {if(is_party_graph && is.null(x_filter_values)) filter(., .data[[x_variable]] != "other") else .}
+    
+    # Calculate total weight for each x_variable group
+    group_totals <- df_groups %>%
+      group_by(.data[[x_variable]]) %>%
+      summarize(total_group_weight = sum(.data[[weights_variable]], na.rm = TRUE))
+    
+    # Calculate weighted percentages for each x_variable/fill_variable combination
+    plot_data <- df_groups %>%
       group_by(.data[[x_variable]], .data[[fill_variable]]) %>%
       summarize(weighted_count = sum(.data[[weights_variable]], na.rm = TRUE), .groups = "drop") %>%
-      group_by(.data[[x_variable]]) %>%
-      mutate(group_pct = weighted_count / sum(weighted_count) * 100)
+      left_join(group_totals, by = x_variable) %>%
+      mutate(group_pct = weighted_count / total_group_weight * 100)
     
     # If x_variable is party choice, handle party mapping
     if (is_party_graph) {
