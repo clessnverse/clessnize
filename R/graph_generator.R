@@ -10,7 +10,7 @@ library(scales)
 #' @param data Dataframe containing the data
 #' @param x_variable String with the name of the variable for the x-axis (default: "dv_voteChoice")
 #' @param fill_variable String with the name of the variable to use for fill colors
-#' @param weights_variable String with the name of the column containing weights (default: "weight")
+#' @param weights_variable String with the name of the column containing weights (default: NULL for no weighting)
 #' @param filter_values Optional vector of values to include from fill_variable
 #' @param x_filter_values Optional vector of values to include from x_variable
 #' @param language "fr" or "en" for output language
@@ -33,7 +33,7 @@ create_standardized_graph <- function(
   data,
   x_variable = "dv_voteChoice",
   fill_variable,
-  weights_variable = "weight",  # Parameter for custom weights column
+  weights_variable = NULL,  # Changed default to NULL for no weighting
   filter_values = NULL,
   x_filter_values = NULL,
   language = "fr",
@@ -77,23 +77,37 @@ create_standardized_graph <- function(
   default_y_title <- if(language == "fr") "Moyenne canadienne" else "Canadian average"
   y_title <- y_title %||% default_y_title
   
+  # Modify caption based on whether weights are used
+  caption_weight_text <- if(is.null(weights_variable)) {
+    ""  # No weighting text
+  } else {
+    if(language == "fr") {
+      "\nDonnées pondérées selon le genre, l'âge, la province, la langue, le niveau d'éducation, le revenu, le status d'immigrant et le type d'habitation"
+    } else {
+      "\nData weighted by gender, age, province, language, education level, income, immigration status, and housing type"
+    }
+  }
+  
   # Caption text based on language
   caption_text <- if(language == "fr") {
-    paste0("Source : Léger-Datagotchi 2025 | n = ", nrow(data), 
-           "\nDonnées pondérées selon le genre, l'âge, la province, la langue, le niveau d'éducation, le revenu, le status d'immigrant et le type d'habitation")
+    paste0("Source : Léger-Datagotchi 2025 | n = ", nrow(data), caption_weight_text)
   } else {
-    paste0("Source: Léger-Datagotchi 2025 | n = ", nrow(data), 
-           "\nData weighted by gender, age, province, language, education level, income, immigration status, and housing type")
+    paste0("Source: Léger-Datagotchi 2025 | n = ", nrow(data), caption_weight_text)
   }
   
-  # Check if weights column exists
-  if (!weights_variable %in% colnames(data)) {
-    stop(paste0("Weight column '", weights_variable, "' not found in data"))
+  # Add weights column if specified
+  if (!is.null(weights_variable)) {
+    # Check if weights column exists
+    if (!weights_variable %in% colnames(data)) {
+      stop(paste0("Weight column '", weights_variable, "' not found in data"))
+    }
+    
+    # Create a weight column reference
+    data$.__weight_col__ <- data[[weights_variable]]
+  } else {
+    # Create a column of 1s for unweighted analysis
+    data$.__weight_col__ <- 1
   }
-  
-  # Create a more direct reference to the weights column
-  # This is critical for proper weight column selection
-  data$.__weight_col__ <- data[[weights_variable]]
   
   # Filter and prepare data
   df_full <- data %>%
@@ -118,7 +132,7 @@ create_standardized_graph <- function(
   if (graph_type == "difference") {
     # Difference from national average for each group
     
-    # Calculate national averages - CORRECTED
+    # Calculate national averages
     df_national <- df_full %>%
       filter(!is.na(!!sym(fill_variable)))
     
@@ -129,7 +143,7 @@ create_standardized_graph <- function(
       summarize(weighted_count = sum(.__weight_col__, na.rm = TRUE)) %>%
       mutate(national_pct = weighted_count / total_national_weight * 100)
     
-    # Calculate group-specific percentages - CORRECTED
+    # Calculate group-specific percentages
     df_groups <- df_full %>%
       filter(!is.na(!!sym(x_variable))) %>%
       filter(!is.na(!!sym(fill_variable)))
@@ -150,7 +164,7 @@ create_standardized_graph <- function(
       left_join(group_totals, by = x_variable) %>%
       mutate(group_pct = weighted_count / total_group_weight * 100)
     
-    # Create plot data with difference from national - FIXED JOIN SYNTAX
+    # Create plot data with difference from national
     plot_data <- group_stats %>%
       left_join(national_averages, by = fill_variable) %>%
       mutate(pct_diff_from_national = group_pct - national_pct)
@@ -199,7 +213,7 @@ create_standardized_graph <- function(
     }
     
   } else if (graph_type == "percentage") {
-    # Percentages within each group - CORRECTED
+    # Percentages within each group
     
     # First filter out NAs
     df_groups <- df_full %>%
