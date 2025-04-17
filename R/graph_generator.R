@@ -8,10 +8,10 @@ library(scales)
 #'   - "percentage": Shows percentages of values within each group on the x-axis
 #'   - "difference": Shows difference from national average for each group
 #'   - "percentage_by_fill": Shows percentages of values within each fill category (bars for a fill category across all x-categories sum to 100%)
-#'   - "mean_difference": Shows the difference between the mean of a numeric variable for each party/group compared to the national average (requires numeric fill_variable with values between 0 and 1)
+#'   - "mean_difference": Shows the difference between the mean of a numeric variable for each party/group compared to the national average
 #' @param data Dataframe containing the data
 #' @param x_variable String with the name of the variable for the x-axis (default: "dv_voteChoice")
-#' @param fill_variable String with the name of the variable to use for fill colors. For "mean_difference" graph type, this must be a numeric variable with values between 0 and 1.
+#' @param fill_variable String with the name of the variable to use for fill colors. For "mean_difference" graph type, this must be a numeric variable.
 #' @param weights_variable String with the name of the column containing weights (default: NULL for no weighting)
 #' @param filter_values Optional vector of values to include from fill_variable
 #' @param x_filter_values Optional vector of values to include from x_variable
@@ -83,11 +83,6 @@ create_standardized_graph <- function(
   if (graph_type == "mean_difference") {
     if (!is.numeric(data[[fill_variable]])) {
       stop("For 'mean_difference' graph type, the fill_variable must be numeric.")
-    }
-    
-    # Check if values are between 0 and 1
-    if (min(data[[fill_variable]], na.rm = TRUE) < 0 || max(data[[fill_variable]], na.rm = TRUE) > 1) {
-      warning("For 'mean_difference' graph type, it's recommended that the fill_variable has values between 0 and 1.")
     }
   }
   
@@ -435,16 +430,27 @@ create_standardized_graph <- function(
     }
     
     # Create plot - for mean_difference we use a single color per bar
-    # Use the first color from the colors vector, or a default blue if not provided
-    bar_color <- if (!is.null(colors) && length(colors) > 0) {
-      colors[1]
+    # Use the first color from the colors vector, or default party colors if not provided
+    bar_colors <- if (!is.null(colors)) {
+      colors
+    } else if (is_party_graph) {
+      party_colors
     } else {
       "#1A4782" # Default blue
     }
     
-    p <- ggplot(plot_data, aes(x = !!sym(x_variable), y = mean_diff)) +
-      geom_bar(stat = "identity", fill = bar_color) +
-      geom_hline(yintercept = 0, linetype = "dashed", color = "black")
+    # If it's a party graph, use party-specific colors
+    if (is_party_graph) {
+      p <- ggplot(plot_data, aes(x = !!sym(x_variable), y = mean_diff, fill = !!sym(x_variable))) +
+        geom_bar(stat = "identity") +
+        scale_fill_manual(values = bar_colors) +
+        geom_hline(yintercept = 0, linetype = "dashed", color = "black")
+    } else {
+      # For non-party graphs, use a single color
+      p <- ggplot(plot_data, aes(x = !!sym(x_variable), y = mean_diff)) +
+        geom_bar(stat = "identity", fill = if(length(bar_colors) == 1) bar_colors else bar_colors[1]) +
+        geom_hline(yintercept = 0, linetype = "dashed", color = "black")
+    }
     
     # Default subtitle if not provided
     if (is.null(subtitle)) {
@@ -503,7 +509,7 @@ create_standardized_graph <- function(
       legend.key.size = unit(0.5, "in")
     )
   
-  # For mean_difference graph type, we might want to remove the legend since it's not needed
+  # For mean_difference graph type, hide the legend since the bars are already colored by party
   if (graph_type == "mean_difference") {
     p <- p + theme(legend.position = "none")
   }
