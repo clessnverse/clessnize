@@ -1,3 +1,7 @@
+library(dplyr)
+library(ggplot2)
+library(scales)
+
 #' Create standardized data visualization graphs
 #'
 #' @param graph_type String indicating the type of graph: "percentage", "difference", "percentage_by_fill", or "difference_by_x"
@@ -208,6 +212,18 @@ create_standardized_graph <- function(
     # Store the original x values before any transformations for color mapping
     plot_data$original_x <- plot_data[[x_variable]]
     
+    # Apply custom ordering for x variable if provided - do this BEFORE any transformations
+    if (!is.null(x_order)) {
+      # First, factor the original values to maintain order
+      plot_data$original_x <- factor(plot_data$original_x, levels = x_order)
+      # Then convert back to character to avoid issues with later transformations
+      plot_data$original_x <- as.character(plot_data$original_x)
+      # Also order the x variable itself
+      plot_data[[x_variable]] <- factor(plot_data[[x_variable]], levels = x_order)
+      # Convert back to character for party mapping
+      plot_data[[x_variable]] <- as.character(plot_data[[x_variable]])
+    }
+    
     # If x_variable is party choice, handle party mapping
     if (is_party_graph) {
       # Replace party abbreviations
@@ -222,12 +238,22 @@ create_standardized_graph <- function(
       if (is.null(x_order)) {
         plot_data[[x_variable]] <- factor(plot_data[[x_variable]], 
                                         levels = party_order[[language]])
+      } else {
+        # If x_order is provided, we need to map it to the display values
+        mapped_order <- sapply(x_order, function(x) {
+          if (x %in% names(party_mapping[[language]])) {
+            return(party_mapping[[language]][x])
+          } else {
+            return(x)
+          }
+        })
+        plot_data[[x_variable]] <- factor(plot_data[[x_variable]], levels = mapped_order)
       }
-    }
-    
-    # Apply custom ordering for x variable if provided
-    if (!is.null(x_order)) {
-      plot_data[[x_variable]] <- factor(plot_data[[x_variable]], levels = x_order)
+    } else {
+      # For non-party graphs, make sure x is properly factored if x_order was provided
+      if (!is.null(x_order)) {
+        plot_data[[x_variable]] <- factor(plot_data[[x_variable]], levels = x_order)
+      }
     }
     
     # Create the base plot with position for the bars
