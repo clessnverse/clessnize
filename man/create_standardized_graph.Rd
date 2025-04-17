@@ -33,13 +33,13 @@ create_standardized_graph(
 - "percentage": Shows percentages of values within each group on the x-axis
 - "difference": Shows difference from national average for each group
 - "percentage_by_fill": Shows percentages of values within each fill category (bars for a fill category across all x-categories sum to 100%)
-- "mean_difference": Shows the difference between the mean of a numeric variable for each party/group compared to the national average (requires numeric fill_variable with values between 0 and 1)}
+- "mean_difference": Shows the difference between the mean of a numeric variable for each party/group compared to the national average}
 
 \item{data}{Dataframe containing the data}
 
 \item{x_variable}{String with the name of the variable for the x-axis (default: "dv_voteChoice")}
 
-\item{fill_variable}{String with the name of the variable to use for fill colors. For "mean_difference" graph type, this must be a numeric variable with values between 0 and 1.}
+\item{fill_variable}{String with the name of the variable to use for fill colors. For "mean_difference" graph type, this must be a numeric variable.}
 
 \item{weights_variable}{String with the name of the column containing weights (default: NULL for no weighting)}
 
