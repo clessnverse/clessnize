@@ -564,6 +564,35 @@ create_standardized_graph <- function(
   
   # Save with high resolution if path is provided
   if (!is.null(output_path)) {
+    # Create directory if it doesn't exist
+    dir.create(dirname(output_path), showWarnings = FALSE, recursive = TRUE)
+    
+    # For difference_by_x graph type, if weights are used, add caption directly to the plot
+    if (graph_type == "difference_by_x" && !is.null(weights_variable)) {
+      # Get caption height position (bottom of the plot)
+      y_pos <- -0.08  # Position at the bottom of the plot, below the main caption
+      
+      # Add weights text as a direct annotation
+      weight_text <- if(language == "fr") {
+        "Données pondérées selon le genre, l'âge, la province, la langue, le niveau d'éducation, le revenu, le status d'immigrant et le type d'habitation"
+      } else {
+        "Data weighted by gender, age, province, language, education level, income, immigration status, and housing type"
+      }
+      
+      p <- p + 
+        annotate("text", 
+                x = 0.5, 
+                y = y_pos, 
+                label = weight_text,
+                hjust = 0, 
+                vjust = 1, 
+                size = 4.4,
+                alpha = 0.8) +
+        coord_cartesian(clip = "off") +  # Allow drawing outside the plot area
+        theme(plot.margin = margin(b = 100, t = 10, l = 10, r = 10))  # Add extra bottom margin
+    }
+    
+    # Save the plot
     ggsave(p,
            filename = output_path,
            width = 16, 
