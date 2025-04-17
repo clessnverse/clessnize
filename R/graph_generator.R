@@ -1,43 +1,12 @@
-library(dplyr)
-library(ggplot2)
-library(scales)
-
-#' Create standardized data visualization graphs
-#'
-#' @param graph_type String indicating the type of graph: "percentage" or "difference"
-#'   - "percentage": Shows percentages of values within each group
-#'   - "difference": Shows difference from national average for each group
-#' @param data Dataframe containing the data
-#' @param x_variable String with the name of the variable for the x-axis (default: "dv_voteChoice")
-#' @param fill_variable String with the name of the variable to use for fill colors
-#' @param weights_variable String with the name of the column containing weights (default: NULL for no weighting)
-#' @param filter_values Optional vector of values to include from fill_variable
-#' @param x_filter_values Optional vector of values to include from x_variable
-#' @param colors Named vector with colors for each value in fill_variable
-#' @param fill_labels Named vector with display labels for each value in fill_variable
-#' @param x_labels Named vector with display labels for each value in x_variable
-#' @param x_order Vector specifying the order of values on the x-axis
-#' @param fill_order Vector specifying the order of values in the fill variable
-#' @param title Graph title
-#' @param subtitle Graph subtitle
-#' @param y_title Y-axis title
-#' @param caption Custom caption text (NULL for default caption)
-#' @param caption_weight_text Custom weighting text for caption (NULL for default text)
-#' @param source_text Source text for caption (default: "Léger-Datagotchi 2025")
-#' @param output_path Path where to save the graph
-#' @param add_logo Logical indicating whether to add the Datagotchi logo
-#' @param logos_list Optional list of PNG logos to add (see add_png.R)
-#'
-#' @return A ggplot object
-#' @export
 create_standardized_graph <- function(
   graph_type = c("percentage", "difference"),
   data,
   x_variable = "dv_voteChoice",
   fill_variable,
-  weights_variable = NULL,
+  weights_variable = NULL,  # Changed default to NULL for no weighting
   filter_values = NULL,
   x_filter_values = NULL,
+  language = "fr",
   colors = NULL,
   fill_labels = NULL,
   x_labels = NULL,
@@ -46,15 +15,69 @@ create_standardized_graph <- function(
   title = NULL,
   subtitle = NULL,
   y_title = NULL,
-  caption = NULL,
-  caption_weight_text = NULL,
-  source_text = "Léger-Datagotchi 2025",
+  custom_caption = NULL,  # Parameter to override the default caption
+  add_caption_line = NULL,  # Parameter to add a line to the default caption
   output_path = NULL,
   add_logo = TRUE,
   logos_list = NULL
 ) {
   # Match the graph_type argument
   graph_type <- match.arg(graph_type)
+  
+  # Default party colors
+  party_colors <- c(
+    "PCC" = "#1A4782",  # Conservative - Blue
+    "PLC" = "#D71920",  # Liberal - Red
+    "BQ" = "#33B2CC",   # Bloc Québécois - Light blue
+    "NPD" = "#F58220",  # NDP - Orange
+    "PVC" = "#3D9B35"   # Green Party - Green
+  )
+  
+  # English/French party mappings
+  party_mapping <- list(
+    "fr" = c("lpc" = "PLC", "cpc" = "PCC", "ndp" = "NPD", "bq" = "BQ", "gpc" = "PVC"),
+    "en" = c("lpc" = "LPC", "cpc" = "CPC", "ndp" = "NDP", "bq" = "BQ", "gpc" = "GPC")
+  )
+  
+  # Party order
+  party_order <- list(
+    "fr" = c("PLC", "PCC", "BQ", "NPD", "PVC"),
+    "en" = c("LPC", "CPC", "BQ", "NDP", "GPC")
+  )
+  
+  # Default labels based on language
+  default_y_title <- if(language == "fr") "Moyenne canadienne" else "Canadian average"
+  y_title <- y_title %||% default_y_title
+  
+  # Modify caption based on whether weights are used
+  caption_weight_text <- if(is.null(weights_variable)) {
+    ""  # No weighting text
+  } else {
+    if(language == "fr") {
+      "\nDonnées pondérées selon le genre, l'âge, la province, la langue, le niveau d'éducation, le revenu, le status d'immigrant et le type d'habitation"
+    } else {
+      "\nData weighted by gender, age, province, language, education level, income, immigration status, and housing type"
+    }
+  }
+  
+  # Default caption text based on language
+  default_caption <- if(language == "fr") {
+    paste0("Source : Léger-Datagotchi 2025 | n = ", nrow(data), caption_weight_text)
+  } else {
+    paste0("Source: Léger-Datagotchi 2025 | n = ", nrow(data), caption_weight_text)
+  }
+  
+  # Determine final caption: custom override, add a line, or use default
+  caption_text <- if (!is.null(custom_caption)) {
+    # Option 1: Completely override with custom caption
+    custom_caption
+  } else if (!is.null(add_caption_line)) {
+    # Option 2: Add a line to the default caption
+    paste0(default_caption, "\n", add_caption_line)
+  } else {
+    # Option 3: Use default caption as is
+    default_caption
+  }
   
   # Add weights column if specified
   if (!is.null(weights_variable)) {
@@ -68,18 +91,6 @@ create_standardized_graph <- function(
   } else {
     # Create a column of 1s for unweighted analysis
     data$.__weight_col__ <- 1
-  }
-  
-  # Generate default caption weight text if not provided but weights are used
-  if (is.null(caption_weight_text) && !is.null(weights_variable)) {
-    caption_weight_text <- "\nData weighted by gender, age, province, language, education level, income, immigration status, and housing type"
-  } else if (is.null(caption_weight_text)) {
-    caption_weight_text <- ""  # No weighting text
-  }
-  
-  # Generate default caption if not provided
-  if (is.null(caption)) {
-    caption <- paste0("Source: ", source_text, " | n = ", nrow(data), caption_weight_text)
   }
   
   # Filter and prepare data
@@ -142,6 +153,23 @@ create_standardized_graph <- function(
       left_join(national_averages, by = fill_variable) %>%
       mutate(pct_diff_from_national = group_pct - national_pct)
     
+    # If x_variable is party choice, handle party mapping
+    if (is_party_graph) {
+      # Replace party abbreviations
+      plot_data <- plot_data %>%
+        mutate(!!sym(x_variable) := case_when(
+          !!sym(x_variable) %in% names(party_mapping[[language]]) ~ 
+            party_mapping[[language]][as.character(!!sym(x_variable))],
+          TRUE ~ as.character(!!sym(x_variable))
+        ))
+      
+      # Set default order for party names (if x_order not specified)
+      if (is.null(x_order)) {
+        plot_data[[x_variable]] <- factor(plot_data[[x_variable]], 
+                                        levels = party_order[[language]])
+      }
+    }
+    
     # Apply custom ordering for x variable if provided
     if (!is.null(x_order)) {
       plot_data[[x_variable]] <- factor(plot_data[[x_variable]], levels = x_order)
@@ -161,7 +189,11 @@ create_standardized_graph <- function(
     
     # Default subtitle if not provided
     if (is.null(subtitle)) {
-      subtitle <- "Difference from Canadian average (percentage points)"
+      subtitle <- if(language == "fr") {
+        "Écart par rapport à la moyenne canadienne (points de %)"
+      } else {
+        "Difference from Canadian average (percentage points)"
+      }
     }
     
   } else if (graph_type == "percentage") {
@@ -189,6 +221,23 @@ create_standardized_graph <- function(
       left_join(group_totals, by = x_variable) %>%
       mutate(group_pct = weighted_count / total_group_weight * 100)
     
+    # If x_variable is party choice, handle party mapping
+    if (is_party_graph) {
+      # Replace party abbreviations
+      plot_data <- plot_data %>%
+        mutate(!!sym(x_variable) := case_when(
+          !!sym(x_variable) %in% names(party_mapping[[language]]) ~ 
+            party_mapping[[language]][as.character(!!sym(x_variable))],
+          TRUE ~ as.character(!!sym(x_variable))
+        ))
+      
+      # Set default order for party names (if x_order not specified)
+      if (is.null(x_order)) {
+        plot_data[[x_variable]] <- factor(plot_data[[x_variable]], 
+                                        levels = party_order[[language]])
+      }
+    }
+    
     # Apply custom ordering for x variable if provided
     if (!is.null(x_order)) {
       plot_data[[x_variable]] <- factor(plot_data[[x_variable]], levels = x_order)
@@ -207,12 +256,13 @@ create_standardized_graph <- function(
     
     # Default subtitle if not provided
     if (is.null(subtitle)) {
-      subtitle <- "Percentage within each group"
+      subtitle <- if(language == "fr") {
+        "Pourcentage au sein de chaque groupe"
+      } else {
+        "Percentage within each group"
+      }
     }
   }
-  
-  # Set default y-title if not provided
-  y_title <- y_title %||% "Canadian average"
   
   # Apply color scale and labels
   if (!is.null(colors)) {
@@ -236,7 +286,7 @@ create_standardized_graph <- function(
       x = "",
       y = y_title,
       fill = "",
-      caption = caption
+      caption = caption_text
     ) +
     theme_datagotchi_light() +
     theme(
@@ -274,6 +324,3 @@ create_standardized_graph <- function(
   
   return(p)
 }
-
-# Null coalescing operator
-`%||%` <- function(x, y) if (is.null(x)) y else x
