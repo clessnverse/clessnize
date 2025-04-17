@@ -5,7 +5,7 @@
 \title{Create standardized data visualization graphs}
 \usage{
 create_standardized_graph(
-  graph_type = c("percentage", "difference", "percentage_by_fill"),
+  graph_type = c("percentage", "difference", "percentage_by_fill", "mean_difference"),
   data,
   x_variable = "dv_voteChoice",
   fill_variable,
@@ -29,16 +29,17 @@ create_standardized_graph(
 )
 }
 \arguments{
-\item{graph_type}{String indicating the type of graph: "percentage", "difference", or "percentage_by_fill"
+\item{graph_type}{String indicating the type of graph: "percentage", "difference", "percentage_by_fill", or "mean_difference"
 - "percentage": Shows percentages of values within each group on the x-axis
 - "difference": Shows difference from national average for each group
-- "percentage_by_fill": Shows percentages of values within each fill category (bars for a fill category across all x-categories sum to 100%)}
+- "percentage_by_fill": Shows percentages of values within each fill category (bars for a fill category across all x-categories sum to 100%)
+- "mean_difference": Shows the difference between the mean of a numeric variable for each party/group compared to the national average (requires numeric fill_variable with values between 0 and 1)}
 
 \item{data}{Dataframe containing the data}
 
 \item{x_variable}{String with the name of the variable for the x-axis (default: "dv_voteChoice")}
 
-\item{fill_variable}{String with the name of the variable to use for fill colors}
+\item{fill_variable}{String with the name of the variable to use for fill colors. For "mean_difference" graph type, this must be a numeric variable with values between 0 and 1.}
 
 \item{weights_variable}{String with the name of the column containing weights (default: NULL for no weighting)}
 

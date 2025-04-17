@@ -4,13 +4,14 @@ library(scales)
 
 #' Create standardized data visualization graphs
 #'
-#' @param graph_type String indicating the type of graph: "percentage", "difference", or "percentage_by_fill"
+#' @param graph_type String indicating the type of graph: "percentage", "difference", "percentage_by_fill", or "mean_difference"
 #'   - "percentage": Shows percentages of values within each group on the x-axis
 #'   - "difference": Shows difference from national average for each group
 #'   - "percentage_by_fill": Shows percentages of values within each fill category (bars for a fill category across all x-categories sum to 100%)
+#'   - "mean_difference": Shows the difference between the mean of a numeric variable for each party/group compared to the national average (requires numeric fill_variable with values between 0 and 1)
 #' @param data Dataframe containing the data
 #' @param x_variable String with the name of the variable for the x-axis (default: "dv_voteChoice")
-#' @param fill_variable String with the name of the variable to use for fill colors
+#' @param fill_variable String with the name of the variable to use for fill colors. For "mean_difference" graph type, this must be a numeric variable with values between 0 and 1.
 #' @param weights_variable String with the name of the column containing weights (default: NULL for no weighting)
 #' @param filter_values Optional vector of values to include from fill_variable
 #' @param x_filter_values Optional vector of values to include from x_variable
@@ -32,7 +33,7 @@ library(scales)
 #' @return A ggplot object
 #' @export
 create_standardized_graph <- function(
-  graph_type = c("percentage", "difference", "percentage_by_fill"),
+  graph_type = c("percentage", "difference", "percentage_by_fill", "mean_difference"),
   data,
   x_variable = "dv_voteChoice",
   fill_variable,
@@ -77,6 +78,18 @@ create_standardized_graph <- function(
     "fr" = c("PLC", "PCC", "BQ", "NPD", "PVC"),
     "en" = c("LPC", "CPC", "BQ", "NDP", "GPC")
   )
+  
+  # Check if fill_variable is numeric for mean_difference graph type
+  if (graph_type == "mean_difference") {
+    if (!is.numeric(data[[fill_variable]])) {
+      stop("For 'mean_difference' graph type, the fill_variable must be numeric.")
+    }
+    
+    # Check if values are between 0 and 1
+    if (min(data[[fill_variable]], na.rm = TRUE) < 0 || max(data[[fill_variable]], na.rm = TRUE) > 1) {
+      warning("For 'mean_difference' graph type, it's recommended that the fill_variable has values between 0 and 1.")
+    }
+  }
   
   # Default labels based on language
   default_y_title <- if(language == "fr") "Moyenne canadienne" else "Canadian average"
@@ -370,10 +383,90 @@ create_standardized_graph <- function(
         "Percentage (%)"
       }
     }
+  } else if (graph_type == "mean_difference") {
+    # Mean difference from national average for numeric fill variable
+    
+    # First filter out NAs
+    df_groups <- df_full %>%
+      filter(!is.na(!!sym(x_variable))) %>%
+      filter(!is.na(!!sym(fill_variable)))
+    
+    # Add party-specific filter if relevant (and no custom x filter provided)
+    if(is_party_graph && is.null(x_filter_values)) {
+      df_groups <- df_groups %>% filter(!!sym(x_variable) != "other")
+    }
+    
+    # Calculate national weighted mean
+    national_mean <- weighted.mean(df_groups[[fill_variable]], df_groups$.__weight_col__, na.rm = TRUE)
+    
+    # Calculate group-specific weighted means
+    plot_data <- df_groups %>%
+      group_by(!!sym(x_variable)) %>%
+      summarize(
+        group_mean = weighted.mean(!!sym(fill_variable), .__weight_col__, na.rm = TRUE),
+        n = sum(.__weight_col__, na.rm = TRUE),
+        .groups = "drop"
+      ) %>%
+      mutate(
+        national_mean = national_mean,
+        mean_diff = (group_mean - national_mean) * 100 # Convert to percentage points
+      )
+    
+    # If x_variable is party choice, handle party mapping
+    if (is_party_graph) {
+      # Replace party abbreviations
+      plot_data <- plot_data %>%
+        mutate(!!sym(x_variable) := case_when(
+          !!sym(x_variable) %in% names(party_mapping[[language]]) ~ 
+            party_mapping[[language]][as.character(!!sym(x_variable))],
+          TRUE ~ as.character(!!sym(x_variable))
+        ))
+      
+      # Set default order for party names (if x_order not specified)
+      if (is.null(x_order)) {
+        plot_data[[x_variable]] <- factor(plot_data[[x_variable]], 
+                                        levels = party_order[[language]])
+      }
+    }
+    
+    # Apply custom ordering for x variable if provided
+    if (!is.null(x_order)) {
+      plot_data[[x_variable]] <- factor(plot_data[[x_variable]], levels = x_order)
+    }
+    
+    # Create plot - for mean_difference we use a single color per bar
+    # Use the first color from the colors vector, or a default blue if not provided
+    bar_color <- if (!is.null(colors) && length(colors) > 0) {
+      colors[1]
+    } else {
+      "#1A4782" # Default blue
+    }
+    
+    p <- ggplot(plot_data, aes(x = !!sym(x_variable), y = mean_diff)) +
+      geom_bar(stat = "identity", fill = bar_color) +
+      geom_hline(yintercept = 0, linetype = "dashed", color = "black")
+    
+    # Default subtitle if not provided
+    if (is.null(subtitle)) {
+      subtitle <- if(language == "fr") {
+        paste0("Écart par rapport à la moyenne canadienne (", round(national_mean * 100, 1), "%)")
+      } else {
+        paste0("Difference from Canadian average (", round(national_mean * 100, 1), "%)")
+      }
+    }
+    
+    # Default y-axis label if not provided
+    if (is.null(y_title)) {
+      y_title <- if(language == "fr") {
+        "Écart (points de %)"
+      } else {
+        "Difference (percentage points)"
+      }
+    }
   }
   
-  # Apply color scale and labels
-  if (!is.null(colors)) {
+  # Apply color scale and labels for graphs that use fill (not mean_difference)
+  if (!is.null(colors) && graph_type != "mean_difference") {
     # Use fill_labels if provided, otherwise use names from colors
     if(is.null(fill_labels)) {
       fill_labels <- names(colors)
@@ -409,6 +502,11 @@ create_standardized_graph <- function(
       legend.text = element_text(size = 52),
       legend.key.size = unit(0.5, "in")
     )
+  
+  # For mean_difference graph type, we might want to remove the legend since it's not needed
+  if (graph_type == "mean_difference") {
+    p <- p + theme(legend.position = "none")
+  }
   
   # Save with high resolution if path is provided
   if (!is.null(output_path)) {
