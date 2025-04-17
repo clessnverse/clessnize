@@ -7,12 +7,11 @@
 create_standardized_graph(
   graph_type = c("percentage", "difference"),
   data,
-  x_variable = "dv_voteChoice",
+  x_variable,
   fill_variable,
-  weights_variable = "weight",
+  weights_variable = NULL,
   filter_values = NULL,
   x_filter_values = NULL,
-  language = "fr",
   colors = NULL,
   fill_labels = NULL,
   x_labels = NULL,
@@ -21,55 +20,88 @@ create_standardized_graph(
   title = NULL,
   subtitle = NULL,
   y_title = NULL,
+  caption = NULL,
   output_path = NULL,
   add_logo = TRUE,
   logos_list = NULL
 )
 }
 \arguments{
-\item{graph_type}{String indicating the type of graph: "percentage" or "difference"
-- "percentage": Shows percentages of values within each group
-- "difference": Shows difference from national average for each group}
+\item{graph_type}{String indicating the type of graph: "percentage" or "difference".
+- "percentage": Shows percentages of values within each group.
+- "difference": Shows difference from overall average for each group.}
 
-\item{data}{Dataframe containing the data}
+\item{data}{Dataframe containing the data.}
 
-\item{x_variable}{String with the name of the variable for the x-axis (default: "dv_voteChoice")}
+\item{x_variable}{String with the name of the variable for the x-axis.}
 
-\item{fill_variable}{String with the name of the variable to use for fill colors}
+\item{fill_variable}{String with the name of the variable to use for fill colors.}
 
-\item{weights_variable}{String with the name of the column containing weights (default: "weight")}
+\item{weights_variable}{String with the name of the column containing weights (default: NULL for no weighting).}
 
-\item{filter_values}{Optional vector of values to include from fill_variable}
+\item{filter_values}{Optional vector of values to include from `fill_variable`.}
 
-\item{x_filter_values}{Optional vector of values to include from x_variable}
+\item{x_filter_values}{Optional vector of values to include from `x_variable`.}
 
-\item{language}{"fr" or "en" for output language}
+\item{colors}{Named vector with colors for each value in `fill_variable`. Required if custom colors are desired.}
 
-\item{colors}{Named vector with colors for each value in fill_variable}
+\item{fill_labels}{Named vector with display labels for each value in `fill_variable`. Used for the legend.}
 
-\item{fill_labels}{Named vector with display labels for each value in fill_variable}
+\item{x_labels}{Named vector with display labels for each value in `x_variable`. Used for the x-axis ticks.}
 
-\item{x_labels}{Named vector with display labels for each value in x_variable}
+\item{x_order}{Vector specifying the order of values on the x-axis.}
 
-\item{x_order}{Vector specifying the order of values on the x-axis}
+\item{fill_order}{Vector specifying the order of values in the fill variable (legend).}
 
-\item{fill_order}{Vector specifying the order of values in the fill variable}
+\item{title}{Graph title (default: NULL).}
 
-\item{title}{Graph title}
+\item{subtitle}{Graph subtitle (default: NULL). A default will be generated based on `graph_type` if NULL.}
 
-\item{subtitle}{Graph subtitle}
+\item{y_title}{Y-axis title (default: NULL). A default will be generated based on `graph_type` if NULL.}
 
-\item{y_title}{Y-axis title}
+\item{caption}{Custom caption text (default: NULL). If NULL, a default caption including source and weighting info will be generated.}
 
-\item{output_path}{Path where to save the graph}
+\item{output_path}{Path where to save the graph (default: NULL, graph is not saved).}
 
-\item{add_logo}{Logical indicating whether to add the Datagotchi logo}
+\item{add_logo}{Logical indicating whether to add the Datagotchi logo (requires `logos_list` and saving the plot). Assumes `theme_datagotchi_light` and `add_multiple_pngs` are available.}
 
-\item{logos_list}{Optional list of PNG logos to add (see add_png.R)}
+\item{logos_list}{Optional list of PNG logos to add (see add_png.R). Only used if `add_logo` is TRUE and `output_path` is provided.}
 }
 \value{
-A ggplot object
+A ggplot object representing the created graph.
 }
 \description{
 Create standardized data visualization graphs
+}
+\examples{
+# Assuming 'survey_data' is your dataframe
+# Assuming 'theme_datagotchi_light' and 'add_multiple_pngs' are defined
+
+# Example 1: Percentage graph (unweighted)
+# create_standardized_graph(
+#   graph_type = "percentage",
+#   data = survey_data,
+#   x_variable = "region",
+#   fill_variable = "education_level",
+#   colors = c("High School" = "blue", "College" = "green", "University" = "red"),
+#   fill_labels = c("High School" = "HS", "College" = "Col", "University" = "Uni"),
+#   x_order = c("Atlantic", "Quebec", "Ontario", "Prairies", "BC"),
+#   title = "Education Level by Region",
+#   y_title = "Percentage (\%)"
+# )
+
+# Example 2: Difference graph (weighted) with custom caption
+# create_standardized_graph(
+#   graph_type = "difference",
+#   data = survey_data,
+#   x_variable = "dv_voteChoice", # Assuming this is pre-processed
+#   fill_variable = "age_group",
+#   weights_variable = "survey_weight",
+#   colors = c("18-34" = "#FFC300", "35-54" = "#FF5733", "55+" = "#C70039"),
+#   x_labels = c("PartyA" = "Party A", "PartyB" = "Party B"), # Provide labels
+#   x_order = c("PartyA", "PartyB", "PartyC"),             # Provide order
+#   title = "Age Group Representation by Party Support",
+#   y_title = "Difference from Overall Avg. (pp)",
+#   caption = "Custom Source Info | Weighted Data | n = calculated_n"
+# )
 }
