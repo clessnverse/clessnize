@@ -5,7 +5,7 @@
 \title{Create standardized data visualization graphs}
 \usage{
 create_standardized_graph(
-  graph_type = c("percentage", "difference", "percentage_by_fill", "mean_difference"),
+  graph_type = c("percentage", "difference", "percentage_by_fill", "difference_by_x"),
   data,
   x_variable = "dv_voteChoice",
   fill_variable,
