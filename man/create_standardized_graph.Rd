@@ -5,7 +5,7 @@
 \title{Create standardized data visualization graphs}
 \usage{
 create_standardized_graph(
-  graph_type = c("percentage", "difference"),
+  graph_type = c("percentage", "difference", "percentage_by_fill"),
   data,
   x_variable = "dv_voteChoice",
   fill_variable,
@@ -29,9 +29,10 @@ create_standardized_graph(
 )
 }
 \arguments{
-\item{graph_type}{String indicating the type of graph: "percentage" or "difference"
-- "percentage": Shows percentages of values within each group
-- "difference": Shows difference from national average for each group}
+\item{graph_type}{String indicating the type of graph: "percentage", "difference", or "percentage_by_fill"
+- "percentage": Shows percentages of values within each group on the x-axis
+- "difference": Shows difference from national average for each group
+- "percentage_by_fill": Shows percentages of values within each fill category (bars for a fill category across all x-categories sum to 100%)}
 
 \item{data}{Dataframe containing the data}
 
