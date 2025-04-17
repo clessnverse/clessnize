@@ -103,9 +103,19 @@ create_standardized_graph <- function(
   
   # Default caption text based on language
   default_caption <- if(language == "fr") {
-    paste0("Source : Léger-Datagotchi 2025 | n = ", format(nrow(data), big.mark = " "), caption_weight_text)
+    if(is.null(weights_variable)) {
+      paste0("Source : Léger-Datagotchi 2025 | n = ", format(nrow(data), big.mark = " "))
+    } else {
+      paste0("Source : Léger-Datagotchi 2025 | n = ", format(nrow(data), big.mark = " "), 
+             "\nDonnées pondérées selon le genre, l'âge, la province, la langue, le niveau d'éducation, le revenu, le status d'immigrant et le type d'habitation")
+    }
   } else {
-    paste0("Source: Léger-Datagotchi 2025 | n = ", format(nrow(data), big.mark = ","), caption_weight_text)
+    if(is.null(weights_variable)) {
+      paste0("Source: Léger-Datagotchi 2025 | n = ", format(nrow(data), big.mark = ","))
+    } else {
+      paste0("Source: Léger-Datagotchi 2025 | n = ", format(nrow(data), big.mark = ","), 
+             "\nData weighted by gender, age, province, language, education level, income, immigration status, and housing type")
+    }
   }
   
   # Determine final caption: custom override, add a line, or use default
@@ -545,10 +555,11 @@ create_standardized_graph <- function(
       axis.title.y = element_text(size = 72, face = "bold", margin = margin(r = 30)),
       plot.title = element_text(size = 102, face = "bold", margin = margin(b = 15)),
       plot.subtitle = element_text(size = 52, margin = margin(b = 15), hjust = 0.5),
-      plot.caption = element_text(size = 44, hjust = 0, lineheight = 1.2),
+      plot.caption = element_text(size = 44, hjust = 0, margin = margin(t = 20), lineheight = 1.5),
       legend.title = element_text(size = 56),
       legend.text = element_text(size = 52),
-      legend.key.size = unit(0.5, "in")
+      legend.key.size = unit(0.5, "in"),
+      plot.margin = margin(10, 10, 30, 10) # Add more bottom margin
     )
   
   # Save with high resolution if path is provided
