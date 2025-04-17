@@ -103,19 +103,9 @@ create_standardized_graph <- function(
   
   # Default caption text based on language
   default_caption <- if(language == "fr") {
-    if(is.null(weights_variable)) {
-      paste0("Source : Léger-Datagotchi 2025 | n = ", format(nrow(data), big.mark = " "))
-    } else {
-      paste0("Source : Léger-Datagotchi 2025 | n = ", format(nrow(data), big.mark = " "), 
-             "\nDonnées pondérées selon le genre, l'âge, la province, la langue, le niveau d'éducation, le revenu, le status d'immigrant et le type d'habitation")
-    }
+    paste0("Source : Léger-Datagotchi 2025 | n = ", nrow(data), caption_weight_text)
   } else {
-    if(is.null(weights_variable)) {
-      paste0("Source: Léger-Datagotchi 2025 | n = ", format(nrow(data), big.mark = ","))
-    } else {
-      paste0("Source: Léger-Datagotchi 2025 | n = ", format(nrow(data), big.mark = ","), 
-             "\nData weighted by gender, age, province, language, education level, income, immigration status, and housing type")
-    }
+    paste0("Source: Léger-Datagotchi 2025 | n = ", nrow(data), caption_weight_text)
   }
   
   # Determine final caption: custom override, add a line, or use default
@@ -549,50 +539,20 @@ create_standardized_graph <- function(
     ) +
     theme_datagotchi_light() +
     theme(
-      axis.text.x = element_text(angle = 0, hjust = 0.5, size = 52),
+      axis.text.x = element_text(angle = 0, hjust = 1, size = 52),
       axis.text.y = element_text(size = 52),
       axis.title.x = element_text(size = 56, margin = margin(t = 30)),
       axis.title.y = element_text(size = 72, face = "bold", margin = margin(r = 30)),
       plot.title = element_text(size = 102, face = "bold", margin = margin(b = 15)),
       plot.subtitle = element_text(size = 52, margin = margin(b = 15), hjust = 0.5),
-      plot.caption = element_text(size = 44, hjust = 0, margin = margin(t = 20), lineheight = 1.5),
+      plot.caption = element_text(size = 44, hjust = 0, lineheight = 0.3),
       legend.title = element_text(size = 56),
       legend.text = element_text(size = 52),
-      legend.key.size = unit(0.5, "in"),
-      plot.margin = margin(10, 10, 30, 10) # Add more bottom margin
+      legend.key.size = unit(0.5, "in")
     )
   
   # Save with high resolution if path is provided
   if (!is.null(output_path)) {
-    # Create directory if it doesn't exist
-    dir.create(dirname(output_path), showWarnings = FALSE, recursive = TRUE)
-    
-    # For difference_by_x graph type, if weights are used, add caption directly to the plot
-    if (graph_type == "difference_by_x" && !is.null(weights_variable)) {
-      # Get caption height position (bottom of the plot)
-      y_pos <- -0.08  # Position at the bottom of the plot, below the main caption
-      
-      # Add weights text as a direct annotation
-      weight_text <- if(language == "fr") {
-        "Données pondérées selon le genre, l'âge, la province, la langue, le niveau d'éducation, le revenu, le status d'immigrant et le type d'habitation"
-      } else {
-        "Data weighted by gender, age, province, language, education level, income, immigration status, and housing type"
-      }
-      
-      p <- p + 
-        annotate("text", 
-                x = 0.5, 
-                y = y_pos, 
-                label = weight_text,
-                hjust = 0, 
-                vjust = 1, 
-                size = 4.4,
-                alpha = 0.8) +
-        coord_cartesian(clip = "off") +  # Allow drawing outside the plot area
-        theme(plot.margin = margin(b = 100, t = 10, l = 10, r = 10))  # Add extra bottom margin
-    }
-    
-    # Save the plot
     ggsave(p,
            filename = output_path,
            width = 16, 
