@@ -4,9 +4,10 @@ library(scales)
 
 #' Create standardized data visualization graphs
 #'
-#' @param graph_type String indicating the type of graph: "percentage" or "difference"
-#'   - "percentage": Shows percentages of values within each group
+#' @param graph_type String indicating the type of graph: "percentage", "difference", or "percentage_by_fill"
+#'   - "percentage": Shows percentages of values within each group on the x-axis
 #'   - "difference": Shows difference from national average for each group
+#'   - "percentage_by_fill": Shows percentages of values within each fill category (bars for a fill category across all x-categories sum to 100%)
 #' @param data Dataframe containing the data
 #' @param x_variable String with the name of the variable for the x-axis (default: "dv_voteChoice")
 #' @param fill_variable String with the name of the variable to use for fill colors
@@ -31,7 +32,7 @@ library(scales)
 #' @return A ggplot object
 #' @export
 create_standardized_graph <- function(
-  graph_type = c("percentage", "difference"),
+  graph_type = c("percentage", "difference", "percentage_by_fill"),
   data,
   x_variable = "dv_voteChoice",
   fill_variable,
@@ -292,6 +293,81 @@ create_standardized_graph <- function(
         "Pourcentage au sein de chaque groupe"
       } else {
         "Percentage within each group"
+      }
+    }
+  } else if (graph_type == "percentage_by_fill") {
+    # Percentages by fill variable (distribution of x variables within each fill group)
+    
+    # First filter out NAs
+    df_groups <- df_full %>%
+      filter(!is.na(!!sym(x_variable))) %>%
+      filter(!is.na(!!sym(fill_variable)))
+    
+    # Add party-specific filter if relevant (and no custom x filter provided)
+    if(is_party_graph && is.null(x_filter_values)) {
+      df_groups <- df_groups %>% filter(!!sym(x_variable) != "other")
+    }
+    
+    # Calculate total weight for each fill_variable group
+    fill_totals <- df_groups %>%
+      group_by(!!sym(fill_variable)) %>%
+      summarize(total_fill_weight = sum(.__weight_col__, na.rm = TRUE))
+    
+    # Calculate weighted percentages for each x_variable within each fill_variable
+    plot_data <- df_groups %>%
+      group_by(!!sym(x_variable), !!sym(fill_variable)) %>%
+      summarize(weighted_count = sum(.__weight_col__, na.rm = TRUE), .groups = "drop") %>%
+      left_join(fill_totals, by = fill_variable) %>%
+      mutate(fill_pct = weighted_count / total_fill_weight * 100)
+    
+    # If x_variable is party choice, handle party mapping
+    if (is_party_graph) {
+      # Replace party abbreviations
+      plot_data <- plot_data %>%
+        mutate(!!sym(x_variable) := case_when(
+          !!sym(x_variable) %in% names(party_mapping[[language]]) ~ 
+            party_mapping[[language]][as.character(!!sym(x_variable))],
+          TRUE ~ as.character(!!sym(x_variable))
+        ))
+      
+      # Set default order for party names (if x_order not specified)
+      if (is.null(x_order)) {
+        plot_data[[x_variable]] <- factor(plot_data[[x_variable]], 
+                                        levels = party_order[[language]])
+      }
+    }
+    
+    # Apply custom ordering for x variable if provided
+    if (!is.null(x_order)) {
+      plot_data[[x_variable]] <- factor(plot_data[[x_variable]], levels = x_order)
+    }
+    
+    # Apply custom ordering for fill variable if provided
+    if (!is.null(fill_order)) {
+      plot_data[[fill_variable]] <- factor(plot_data[[fill_variable]], levels = fill_order)
+    }
+    
+    # Create plot
+    p <- ggplot(plot_data, aes(x = !!sym(x_variable), 
+                               y = fill_pct, 
+                               fill = !!sym(fill_variable))) +
+      geom_bar(stat = "identity", position = "dodge")
+    
+    # Default subtitle if not provided
+    if (is.null(subtitle)) {
+      subtitle <- if(language == "fr") {
+        "Pourcentage au sein de chaque catégorie de remplissage"
+      } else {
+        "Percentage within each fill category"
+      }
+    }
+    
+    # Default y-axis label if not provided
+    if (is.null(y_title)) {
+      y_title <- if(language == "fr") {
+        "Pourcentage (%)"
+      } else {
+        "Percentage (%)"
       }
     }
   }
