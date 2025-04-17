@@ -33,7 +33,7 @@ library(scales)
 #' @return A ggplot object
 #' @export
 create_standardized_graph <- function(
-  graph_type = c("percentage", "difference", "percentage_by_fill", "mean_difference"),
+  graph_type = c("percentage", "difference", "percentage_by_fill", "difference_by_x"),
   data,
   x_variable = "dv_voteChoice",
   fill_variable,
@@ -78,13 +78,6 @@ create_standardized_graph <- function(
     "fr" = c("PLC", "PCC", "BQ", "NPD", "PVC"),
     "en" = c("LPC", "CPC", "BQ", "NDP", "GPC")
   )
-  
-  # Check if fill_variable is numeric for mean_difference graph type
-  if (graph_type == "mean_difference") {
-    if (!is.numeric(data[[fill_variable]])) {
-      stop("For 'mean_difference' graph type, the fill_variable must be numeric.")
-    }
-  }
   
   # Default labels based on language
   default_y_title <- if(language == "fr") "Moyenne canadienne" else "Canadian average"
@@ -154,7 +147,111 @@ create_standardized_graph <- function(
   is_party_graph <- x_variable == "dv_voteChoice"
   
   # Process based on graph type
-  if (graph_type == "difference") {
+  if (graph_type == "difference_by_x") {
+    # NEW GRAPH TYPE: Difference from national average for each x group on a single Y variable
+    
+    # For this graph type, the fill_variable is treated as the Y variable
+    y_variable <- fill_variable
+    
+    # Check if y_variable is numeric and between 0 and 1
+    if (!is.numeric(df_full[[y_variable]])) {
+      warning(paste0("The Y variable (", y_variable, ") is not numeric. This graph type requires a numeric variable."))
+    } else {
+      # Check if values are between 0 and 1
+      y_min <- min(df_full[[y_variable]], na.rm = TRUE)
+      y_max <- max(df_full[[y_variable]], na.rm = TRUE)
+      
+      if (y_min < 0 || y_max > 1) {
+        warning(paste0("The Y variable (", y_variable, ") contains values outside the 0-1 range. For best results, the variable should be coded between 0 and 1."))
+      }
+    }
+    
+    # Calculate national average of y_variable
+    df_national <- df_full %>%
+      filter(!is.na(!!sym(y_variable))) %>%
+      filter(!is.na(!!sym(x_variable)))
+    
+    national_average <- weighted.mean(df_national[[y_variable]], 
+                                     df_national$.__weight_col__, 
+                                     na.rm = TRUE)
+    
+    # Calculate group averages
+    df_groups <- df_full %>%
+      filter(!is.na(!!sym(x_variable))) %>%
+      filter(!is.na(!!sym(y_variable)))
+    
+    # Add party-specific filter if relevant (and no custom x filter provided)
+    if(is_party_graph && is.null(x_filter_values)) {
+      df_groups <- df_groups %>% filter(!!sym(x_variable) != "other")
+    }
+    
+    # Calculate weighted average for each x group
+    group_averages <- df_groups %>%
+      group_by(!!sym(x_variable)) %>%
+      summarize(
+        weighted_average = weighted.mean(!!sym(y_variable), .__weight_col__, na.rm = TRUE),
+        total_group_weight = sum(.__weight_col__, na.rm = TRUE),
+        .groups = "drop"
+      )
+    
+    # Calculate difference from national average
+    plot_data <- group_averages %>%
+      mutate(
+        diff_from_national = weighted_average - national_average,
+        # Convert to percentage points if the variable is between 0-1
+        diff_from_national_pct = diff_from_national * 100
+      )
+    
+    # If x_variable is party choice, handle party mapping
+    if (is_party_graph) {
+      # Replace party abbreviations
+      plot_data <- plot_data %>%
+        mutate(!!sym(x_variable) := case_when(
+          !!sym(x_variable) %in% names(party_mapping[[language]]) ~ 
+            party_mapping[[language]][as.character(!!sym(x_variable))],
+          TRUE ~ as.character(!!sym(x_variable))
+        ))
+      
+      # Set default order for party names (if x_order not specified)
+      if (is.null(x_order)) {
+        plot_data[[x_variable]] <- factor(plot_data[[x_variable]], 
+                                        levels = party_order[[language]])
+      }
+    }
+    
+    # Apply custom ordering for x variable if provided
+    if (!is.null(x_order)) {
+      plot_data[[x_variable]] <- factor(plot_data[[x_variable]], levels = x_order)
+    }
+    
+    # Create plot - single color bars showing difference from national average
+    p <- ggplot(plot_data, aes(x = !!sym(x_variable), 
+                              y = diff_from_national_pct)) +
+      geom_bar(stat = "identity", 
+               position = "dodge", 
+               fill = "#1A4782") +  # Default blue color
+      geom_hline(yintercept = 0, linetype = "dashed", color = "black")
+    
+    # Apply custom colors if provided (for single bar - just use first color)
+    if (!is.null(colors) && length(colors) > 0) {
+      p <- ggplot(plot_data, aes(x = !!sym(x_variable), 
+                                y = diff_from_national_pct)) +
+        geom_bar(stat = "identity", 
+                 position = "dodge", 
+                 fill = colors[1]) +
+        geom_hline(yintercept = 0, linetype = "dashed", color = "black")
+    }
+    
+    # Default subtitle if not provided
+    if (is.null(subtitle)) {
+      subtitle <- if(language == "fr") {
+        paste0("Écart par rapport à la moyenne canadienne (", names(data)[names(data) == y_variable], ")")
+      } else {
+        paste0("Difference from Canadian average (", names(data)[names(data) == y_variable], ")")
+      }
+    }
+    
+  } else if (graph_type == "difference") {
     # Difference from national average for each group
     
     # Calculate national averages
@@ -378,101 +475,10 @@ create_standardized_graph <- function(
         "Percentage (%)"
       }
     }
-  } else if (graph_type == "mean_difference") {
-    # Mean difference from national average for numeric fill variable
-    
-    # First filter out NAs
-    df_groups <- df_full %>%
-      filter(!is.na(!!sym(x_variable))) %>%
-      filter(!is.na(!!sym(fill_variable)))
-    
-    # Add party-specific filter if relevant (and no custom x filter provided)
-    if(is_party_graph && is.null(x_filter_values)) {
-      df_groups <- df_groups %>% filter(!!sym(x_variable) != "other")
-    }
-    
-    # Calculate national weighted mean
-    national_mean <- weighted.mean(df_groups[[fill_variable]], df_groups$.__weight_col__, na.rm = TRUE)
-    
-    # Calculate group-specific weighted means
-    plot_data <- df_groups %>%
-      group_by(!!sym(x_variable)) %>%
-      summarize(
-        group_mean = weighted.mean(!!sym(fill_variable), .__weight_col__, na.rm = TRUE),
-        n = sum(.__weight_col__, na.rm = TRUE),
-        .groups = "drop"
-      ) %>%
-      mutate(
-        national_mean = national_mean,
-        mean_diff = (group_mean - national_mean) * 100 # Convert to percentage points
-      )
-    
-    # If x_variable is party choice, handle party mapping
-    if (is_party_graph) {
-      # Replace party abbreviations
-      plot_data <- plot_data %>%
-        mutate(!!sym(x_variable) := case_when(
-          !!sym(x_variable) %in% names(party_mapping[[language]]) ~ 
-            party_mapping[[language]][as.character(!!sym(x_variable))],
-          TRUE ~ as.character(!!sym(x_variable))
-        ))
-      
-      # Set default order for party names (if x_order not specified)
-      if (is.null(x_order)) {
-        plot_data[[x_variable]] <- factor(plot_data[[x_variable]], 
-                                        levels = party_order[[language]])
-      }
-    }
-    
-    # Apply custom ordering for x variable if provided
-    if (!is.null(x_order)) {
-      plot_data[[x_variable]] <- factor(plot_data[[x_variable]], levels = x_order)
-    }
-    
-    # Create plot - for mean_difference we use a single color per bar
-    # Use the first color from the colors vector, or default party colors if not provided
-    bar_colors <- if (!is.null(colors)) {
-      colors
-    } else if (is_party_graph) {
-      party_colors
-    } else {
-      "#1A4782" # Default blue
-    }
-    
-    # If it's a party graph, use party-specific colors
-    if (is_party_graph) {
-      p <- ggplot(plot_data, aes(x = !!sym(x_variable), y = mean_diff, fill = !!sym(x_variable))) +
-        geom_bar(stat = "identity") +
-        scale_fill_manual(values = bar_colors) +
-        geom_hline(yintercept = 0, linetype = "dashed", color = "black")
-    } else {
-      # For non-party graphs, use a single color
-      p <- ggplot(plot_data, aes(x = !!sym(x_variable), y = mean_diff)) +
-        geom_bar(stat = "identity", fill = if(length(bar_colors) == 1) bar_colors else bar_colors[1]) +
-        geom_hline(yintercept = 0, linetype = "dashed", color = "black")
-    }
-    
-    # Default subtitle if not provided
-    if (is.null(subtitle)) {
-      subtitle <- if(language == "fr") {
-        paste0("Écart par rapport à la moyenne canadienne (", round(national_mean * 100, 1), "%)")
-      } else {
-        paste0("Difference from Canadian average (", round(national_mean * 100, 1), "%)")
-      }
-    }
-    
-    # Default y-axis label if not provided
-    if (is.null(y_title)) {
-      y_title <- if(language == "fr") {
-        "Écart (points de %)"
-      } else {
-        "Difference (percentage points)"
-      }
-    }
   }
   
-  # Apply color scale and labels for graphs that use fill (not mean_difference)
-  if (!is.null(colors) && graph_type != "mean_difference") {
+  # Apply color scale and labels for multi-color graphs
+  if (!is.null(colors) && graph_type != "difference_by_x") {
     # Use fill_labels if provided, otherwise use names from colors
     if(is.null(fill_labels)) {
       fill_labels <- names(colors)
@@ -508,11 +514,6 @@ create_standardized_graph <- function(
       legend.text = element_text(size = 52),
       legend.key.size = unit(0.5, "in")
     )
-  
-  # For mean_difference graph type, hide the legend since the bars are already colored by party
-  if (graph_type == "mean_difference") {
-    p <- p + theme(legend.position = "none")
-  }
   
   # Save with high resolution if path is provided
   if (!is.null(output_path)) {
