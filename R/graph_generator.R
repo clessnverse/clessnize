@@ -477,13 +477,16 @@ create_standardized_graph <- function(
     }
   }
   
-  # Apply color scale and labels for multi-color graphs
-  if (!is.null(colors) && graph_type != "difference_by_x") {
-    # Use fill_labels if provided, otherwise use names from colors
-    if(is.null(fill_labels)) {
-      fill_labels <- names(colors)
+  # Apply color scale and labels
+  if (!is.null(colors)) {
+    # For difference_by_x, the colors are already applied in the graph_type block
+    if (graph_type != "difference_by_x") {
+      # Use fill_labels if provided, otherwise use names from colors
+      if(is.null(fill_labels)) {
+        fill_labels <- names(colors)
+      }
+      p <- p + scale_fill_manual(values = colors, labels = fill_labels)
     }
-    p <- p + scale_fill_manual(values = colors, labels = fill_labels)
   }
   
   # Apply x-axis labels if provided
