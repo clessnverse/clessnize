@@ -29,17 +29,18 @@ create_standardized_graph(
 )
 }
 \arguments{
-\item{graph_type}{String indicating the type of graph: "percentage", "difference", "percentage_by_fill", or "mean_difference"
+\item{graph_type}{String indicating the type of graph: "percentage", "difference", "percentage_by_fill", or "difference_by_x"
 - "percentage": Shows percentages of values within each group on the x-axis
 - "difference": Shows difference from national average for each group
 - "percentage_by_fill": Shows percentages of values within each fill category (bars for a fill category across all x-categories sum to 100%)
-- "mean_difference": Shows the difference between the mean of a numeric variable for each party/group compared to the national average}
+- "difference_by_x": Shows difference from national average of a numeric variable for each x-category}
 
 \item{data}{Dataframe containing the data}
 
 \item{x_variable}{String with the name of the variable for the x-axis (default: "dv_voteChoice")}
 
-\item{fill_variable}{String with the name of the variable to use for fill colors. For "mean_difference" graph type, this must be a numeric variable.}
+\item{fill_variable}{String with the name of the variable to use for fill colors in "percentage", "difference", and "percentage_by_fill" modes.
+In "difference_by_x" mode, this parameter specifies the numeric variable to analyze.}
 
 \item{weights_variable}{String with the name of the column containing weights (default: NULL for no weighting)}
 
@@ -49,7 +50,7 @@ create_standardized_graph(
 
 \item{language}{"fr" or "en" for output language}
 
-\item{colors}{Named vector with colors for each value in fill_variable}
+\item{colors}{Named vector with colors for each value in fill_variable (or in x_variable for "difference_by_x" mode)}
 
 \item{fill_labels}{Named vector with display labels for each value in fill_variable}
 

@@ -1,22 +1,19 @@
-library(dplyr)
-library(ggplot2)
-library(scales)
-
 #' Create standardized data visualization graphs
 #'
-#' @param graph_type String indicating the type of graph: "percentage", "difference", "percentage_by_fill", or "mean_difference"
+#' @param graph_type String indicating the type of graph: "percentage", "difference", "percentage_by_fill", or "difference_by_x"
 #'   - "percentage": Shows percentages of values within each group on the x-axis
 #'   - "difference": Shows difference from national average for each group
 #'   - "percentage_by_fill": Shows percentages of values within each fill category (bars for a fill category across all x-categories sum to 100%)
-#'   - "mean_difference": Shows the difference between the mean of a numeric variable for each party/group compared to the national average
+#'   - "difference_by_x": Shows difference from national average of a numeric variable for each x-category
 #' @param data Dataframe containing the data
 #' @param x_variable String with the name of the variable for the x-axis (default: "dv_voteChoice")
-#' @param fill_variable String with the name of the variable to use for fill colors. For "mean_difference" graph type, this must be a numeric variable.
+#' @param fill_variable String with the name of the variable to use for fill colors in "percentage", "difference", and "percentage_by_fill" modes.
+#'        In "difference_by_x" mode, this parameter specifies the numeric variable to analyze.
 #' @param weights_variable String with the name of the column containing weights (default: NULL for no weighting)
 #' @param filter_values Optional vector of values to include from fill_variable
 #' @param x_filter_values Optional vector of values to include from x_variable
 #' @param language "fr" or "en" for output language
-#' @param colors Named vector with colors for each value in fill_variable
+#' @param colors Named vector with colors for each value in fill_variable (or in x_variable for "difference_by_x" mode)
 #' @param fill_labels Named vector with display labels for each value in fill_variable
 #' @param x_labels Named vector with display labels for each value in x_variable
 #' @param x_order Vector specifying the order of values on the x-axis
@@ -32,6 +29,12 @@ library(scales)
 #'
 #' @return A ggplot object
 #' @export
+#' 
+#' @importFrom dplyr filter group_by summarize mutate left_join case_when select
+#' @importFrom ggplot2 ggplot aes geom_bar geom_hline scale_fill_manual scale_x_discrete labs theme element_text margin unit ggsave
+#' @importFrom scales percent
+#' @importFrom stats weighted.mean
+#' @importFrom rlang sym !!
 create_standardized_graph <- function(
   graph_type = c("percentage", "difference", "percentage_by_fill", "difference_by_x"),
   data,
@@ -202,6 +205,9 @@ create_standardized_graph <- function(
         diff_from_national_pct = diff_from_national * 100
       )
     
+    # Store the original x values before any transformations for color mapping
+    plot_data$original_x <- plot_data[[x_variable]]
+    
     # If x_variable is party choice, handle party mapping
     if (is_party_graph) {
       # Replace party abbreviations
@@ -224,22 +230,23 @@ create_standardized_graph <- function(
       plot_data[[x_variable]] <- factor(plot_data[[x_variable]], levels = x_order)
     }
     
-    # Create plot - single color bars showing difference from national average
+    # Create the base plot with position for the bars
     p <- ggplot(plot_data, aes(x = !!sym(x_variable), 
-                              y = diff_from_national_pct)) +
-      geom_bar(stat = "identity", 
-               position = "dodge", 
-               fill = "#1A4782") +  # Default blue color
+                             y = diff_from_national_pct)) +
       geom_hline(yintercept = 0, linetype = "dashed", color = "black")
     
-    # Apply custom colors if provided (for single bar - just use first color)
-    if (!is.null(colors) && length(colors) > 0) {
-      p <- ggplot(plot_data, aes(x = !!sym(x_variable), 
-                                y = diff_from_national_pct)) +
-        geom_bar(stat = "identity", 
-                 position = "dodge", 
-                 fill = colors[1]) +
-        geom_hline(yintercept = 0, linetype = "dashed", color = "black")
+    # Apply colors mapping to the original x values
+    if (!is.null(colors)) {
+      # Map the colors based on the original x values (before transformation)
+      p <- p + geom_bar(stat = "identity", 
+                       position = "dodge",
+                       aes(fill = original_x)) +
+             scale_fill_manual(values = colors, guide = "none")
+    } else {
+      # Default blue color if no colors provided
+      p <- p + geom_bar(stat = "identity", 
+                       position = "dodge",
+                       fill = "#1A4782")
     }
     
     # Default subtitle if not provided
