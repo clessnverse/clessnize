@@ -103,9 +103,9 @@ create_standardized_graph <- function(
   
   # Default caption text based on language
   default_caption <- if(language == "fr") {
-    paste0("Source : Léger-Datagotchi 2025 | n = ", nrow(data), caption_weight_text)
+    paste0("Source : Léger-Datagotchi 2025 | n = ", format(nrow(data), big.mark = " "), caption_weight_text)
   } else {
-    paste0("Source: Léger-Datagotchi 2025 | n = ", nrow(data), caption_weight_text)
+    paste0("Source: Léger-Datagotchi 2025 | n = ", format(nrow(data), big.mark = ","), caption_weight_text)
   }
   
   # Determine final caption: custom override, add a line, or use default
@@ -539,13 +539,13 @@ create_standardized_graph <- function(
     ) +
     theme_datagotchi_light() +
     theme(
-      axis.text.x = element_text(angle = 0, hjust = 1, size = 52),
+      axis.text.x = element_text(angle = 0, hjust = 0.5, size = 52),
       axis.text.y = element_text(size = 52),
       axis.title.x = element_text(size = 56, margin = margin(t = 30)),
       axis.title.y = element_text(size = 72, face = "bold", margin = margin(r = 30)),
       plot.title = element_text(size = 102, face = "bold", margin = margin(b = 15)),
       plot.subtitle = element_text(size = 52, margin = margin(b = 15), hjust = 0.5),
-      plot.caption = element_text(size = 44, hjust = 0, lineheight = 0.3),
+      plot.caption = element_text(size = 44, hjust = 0, lineheight = 1.2),
       legend.title = element_text(size = 56),
       legend.text = element_text(size = 52),
       legend.key.size = unit(0.5, "in")
