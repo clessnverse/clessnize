@@ -12,6 +12,7 @@ create_standardized_graph(
   weights_variable = NULL,
   filter_values = NULL,
   x_filter_values = NULL,
+  language = "fr",
   colors = NULL,
   fill_labels = NULL,
   x_labels = NULL,
@@ -20,9 +21,8 @@ create_standardized_graph(
   title = NULL,
   subtitle = NULL,
   y_title = NULL,
-  caption = NULL,
-  caption_weight_text = NULL,
-  source_text = "Léger-Datagotchi 2025",
+  custom_caption = NULL,
+  add_caption_line = NULL,
   output_path = NULL,
   add_logo = TRUE,
   logos_list = NULL
@@ -45,6 +45,8 @@ create_standardized_graph(
 
 \item{x_filter_values}{Optional vector of values to include from x_variable}
 
+\item{language}{"fr" or "en" for output language}
+
 \item{colors}{Named vector with colors for each value in fill_variable}
 
 \item{fill_labels}{Named vector with display labels for each value in fill_variable}
@@ -61,11 +63,9 @@ create_standardized_graph(
 
 \item{y_title}{Y-axis title}
 
-\item{caption}{Custom caption text (NULL for default caption)}
+\item{custom_caption}{String to completely override the default caption}
 
-\item{caption_weight_text}{Custom weighting text for caption (NULL for default text)}
-
-\item{source_text}{Source text for caption (default: "Léger-Datagotchi 2025")}
+\item{add_caption_line}{String to add as an additional line to the default caption}
 
 \item{output_path}{Path where to save the graph}
 

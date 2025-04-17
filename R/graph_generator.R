@@ -1,3 +1,35 @@
+library(dplyr)
+library(ggplot2)
+library(scales)
+
+#' Create standardized data visualization graphs
+#'
+#' @param graph_type String indicating the type of graph: "percentage" or "difference"
+#'   - "percentage": Shows percentages of values within each group
+#'   - "difference": Shows difference from national average for each group
+#' @param data Dataframe containing the data
+#' @param x_variable String with the name of the variable for the x-axis (default: "dv_voteChoice")
+#' @param fill_variable String with the name of the variable to use for fill colors
+#' @param weights_variable String with the name of the column containing weights (default: NULL for no weighting)
+#' @param filter_values Optional vector of values to include from fill_variable
+#' @param x_filter_values Optional vector of values to include from x_variable
+#' @param language "fr" or "en" for output language
+#' @param colors Named vector with colors for each value in fill_variable
+#' @param fill_labels Named vector with display labels for each value in fill_variable
+#' @param x_labels Named vector with display labels for each value in x_variable
+#' @param x_order Vector specifying the order of values on the x-axis
+#' @param fill_order Vector specifying the order of values in the fill variable
+#' @param title Graph title
+#' @param subtitle Graph subtitle
+#' @param y_title Y-axis title
+#' @param custom_caption String to completely override the default caption
+#' @param add_caption_line String to add as an additional line to the default caption
+#' @param output_path Path where to save the graph
+#' @param add_logo Logical indicating whether to add the Datagotchi logo
+#' @param logos_list Optional list of PNG logos to add (see add_png.R)
+#'
+#' @return A ggplot object
+#' @export
 create_standardized_graph <- function(
   graph_type = c("percentage", "difference"),
   data,
@@ -324,3 +356,6 @@ create_standardized_graph <- function(
   
   return(p)
 }
+
+# Null coalescing operator
+`%||%` <- function(x, y) if (is.null(x)) y else x
