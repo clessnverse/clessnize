@@ -48,7 +48,8 @@ library(utils) # For download.file
 #' @param colors Named vector where names correspond to the values in
 #'   `fill_variable` (for most graph types) or `x_variable` (for
 #'   "difference_by_x") and values are valid color specifications (e.g., hex
-#'   codes, color names).
+#'   codes, color names). Names should match values *before* party mapping for
+#'   difference_by_x.
 #' @param fill_labels Named vector providing display labels for the values in
 #'   `fill_variable`. Names should match the data values, values are the labels
 #'   for the legend. If `NULL`, the original values or names from `colors`
@@ -94,9 +95,10 @@ library(utils) # For download.file
 #'   all_of vars one_of .data
 #' @importFrom ggplot2 ggplot aes geom_bar geom_hline scale_fill_manual
 #'   scale_x_discrete labs theme element_text margin unit ggsave waiver
-#'   element_line element_rect element_blank scale_fill_discrete # Added discrete
+#'   element_line element_rect element_blank scale_fill_discrete
 #' @importFrom stats weighted.mean
-#' @importFrom rlang sym !! := `%||%`
+#' @importFrom rlang sym !! := `%||%` is_character is_logical is_vector
+#'   is_list is_numeric is_null
 #' @importFrom ggtext element_markdown
 #' @importFrom magick image_read image_info
 #' @importFrom utils download.file
@@ -129,38 +131,32 @@ create_standardized_graph <- function(graph_type = c("percentage",
   graph_type <- match.arg(graph_type)
   stopifnot(
     is.data.frame(data),
-    is.character(x_variable), length(x_variable) == 1,
-    is.character(fill_variable), length(fill_variable) == 1,
-    is.null(weights_variable) || (is.character(weights_variable) && length(weights_variable) == 1),
-    is.null(filter_values) || is.vector(filter_values),
-    is.null(x_filter_values) || is.vector(x_filter_values),
+    rlang::is_character(x_variable), length(x_variable) == 1,
+    rlang::is_character(fill_variable), length(fill_variable) == 1,
+    rlang::is_null(weights_variable) || (rlang::is_character(weights_variable) && length(weights_variable) == 1),
+    rlang::is_null(filter_values) || rlang::is_vector(filter_values),
+    rlang::is_null(x_filter_values) || rlang::is_vector(x_filter_values),
     language %in% c("fr", "en"),
-    is.null(colors) || (is.vector(colors) && !is.null(names(colors))),
-    is.null(fill_labels) || (is.vector(fill_labels) && !is.null(names(fill_labels))),
-    is.null(x_labels) || (is.vector(x_labels) && !is.null(names(x_labels))),
-    is.null(x_order) || is.vector(x_order),
-    is.null(fill_order) || is.vector(fill_order),
-    is.null(title) || (is.character(title) && length(title) == 1),
-    is.null(subtitle) || (is.character(subtitle) && length(subtitle) == 1),
-    is.null(y_title) || (is.character(y_title) && length(y_title) == 1),
-    is.null(custom_caption) || (is.character(custom_caption) && length(custom_caption) == 1),
-    is.null(add_caption_line) || (is.character(add_caption_line) && length(add_caption_line) == 1),
-    is.null(output_path) || (is.character(output_path) && length(output_path) == 1),
-    is.logical(add_logo), length(add_logo) == 1,
-    is.null(logos_list) || is.list(logos_list),
-    is.numeric(png_label_scale), length(png_label_scale) == 1, png_label_scale > 0
+    rlang::is_null(colors) || (rlang::is_vector(colors) && !rlang::is_null(names(colors))),
+    rlang::is_null(fill_labels) || (rlang::is_vector(fill_labels) && !rlang::is_null(names(fill_labels))),
+    rlang::is_null(x_labels) || (rlang::is_vector(x_labels) && !rlang::is_null(names(x_labels))),
+    rlang::is_null(x_order) || rlang::is_vector(x_order),
+    rlang::is_null(fill_order) || rlang::is_vector(fill_order),
+    rlang::is_null(title) || (rlang::is_character(title) && length(title) == 1),
+    rlang::is_null(subtitle) || (rlang::is_character(subtitle) && length(subtitle) == 1),
+    rlang::is_null(y_title) || (rlang::is_character(y_title) && length(y_title) == 1),
+    rlang::is_null(custom_caption) || (rlang::is_character(custom_caption) && length(custom_caption) == 1),
+    rlang::is_null(add_caption_line) || (rlang::is_character(add_caption_line) && length(add_caption_line) == 1),
+    rlang::is_null(output_path) || (rlang::is_character(output_path) && length(output_path) == 1),
+    rlang::is_logical(add_logo), length(add_logo) == 1,
+    rlang::is_null(logos_list) || rlang::is_list(logos_list),
+    rlang::is_numeric(png_label_scale), length(png_label_scale) == 1, png_label_scale > 0
   )
 
   # --- Define party mappings and order ---
   party_mapping <- list(
-    "fr" = c(
-      "lpc" = "PLC", "cpc" = "PCC", "ndp" = "NPD",
-      "bq" = "BQ", "gpc" = "PVC"
-    ),
-    "en" = c(
-      "lpc" = "LPC", "cpc" = "CPC", "ndp" = "NDP",
-      "bq" = "BQ", "gpc" = "GPC"
-    )
+    "fr" = c("lpc" = "PLC", "cpc" = "PCC", "ndp" = "NPD", "bq" = "BQ", "gpc" = "PVC"),
+    "en" = c("lpc" = "LPC", "cpc" = "CPC", "ndp" = "NDP", "bq" = "BQ", "gpc" = "GPC")
   )
   default_party_order <- list(
     "fr" = c("PLC", "PCC", "BQ", "NPD", "PVC"),
@@ -169,123 +165,58 @@ create_standardized_graph <- function(graph_type = c("percentage",
 
   # --- Reverse mapping for label lookup ---
   reverse_party_mapping <- NULL
-  if (x_variable == "dv_voteChoice" && !is.null(party_mapping[[language]])) {
-    reverse_party_mapping <- setNames(
-      names(party_mapping[[language]]),
-      party_mapping[[language]]
-    )
+  if (x_variable == "dv_voteChoice" && !rlang::is_null(party_mapping[[language]])) {
+    reverse_party_mapping <- setNames(names(party_mapping[[language]]), party_mapping[[language]])
   }
 
   # --- Initial setup (weights, captions, y_title) ---
-  default_y_title <- if (language == "fr") {
-    "Moyenne canadienne"
-  } else {
-    "Canadian average"
-  }
+  default_y_title <- if (language == "fr") "Moyenne canadienne" else "Canadian average"
   y_title_set <- y_title # Store user preference
 
-  caption_weight_text <- if (is.null(weights_variable)) {
-    ""
-  } else {
-    if (language == "fr") {
-      paste(
-        "\nDonnées pondérées selon le genre, l'âge, la province,",
-        "la langue, le niveau d'éducation, le revenu,",
-        "le status d'immigrant et le type d'habitation"
-      )
-    } else {
-      paste(
-        "\nData weighted by gender, age, province, language,",
-        "education level, income, immigration status,",
-        "and housing type"
-      )
-    }
+  caption_weight_text <- if (rlang::is_null(weights_variable)) "" else {
+    if (language == "fr") "\nDonnées pondérées selon le genre, l'âge, la province, la langue, le niveau d'éducation, le revenu, le status d'immigrant et le type d'habitation"
+    else "\nData weighted by gender, age, province, language, education level, income, immigration status, and housing type"
   }
-
-  # Use current year for the default caption
-  current_year <- format(Sys.Date(), "%Y")
-  default_caption <- if (language == "fr") {
-    paste0(
-      "Source : Léger-Datagotchi ", current_year,
-      " | n = ", nrow(data), caption_weight_text
-    )
-  } else {
-    paste0(
-      "Source: Léger-Datagotchi ", current_year,
-      " | n = ", nrow(data), caption_weight_text
-    )
-  }
-
-  caption_text <- custom_caption %||% {
-    if (!is.null(add_caption_line)) {
-      paste0(default_caption, "\n", add_caption_line)
-    } else {
-      default_caption
-    }
-  }
+  # Use current date for the default caption
+  current_year <- format(Sys.Date(), "%Y") # Consistent with previous request
+  default_caption <- if (language == "fr") { paste0("Source : Léger-Datagotchi ", current_year, " | n = ", nrow(data), caption_weight_text) }
+  else { paste0("Source: Léger-Datagotchi ", current_year, " | n = ", nrow(data), caption_weight_text) }
+  caption_text <- custom_caption %||% { if (!rlang::is_null(add_caption_line)) paste0(default_caption, "\n", add_caption_line) else default_caption }
 
   # Add weight column or dummy weights using internal name
-  weight_col_internal <- ".WEIGHT_INTERNAL_TEMP" # Use a less common name
-  if (!is.null(weights_variable)) {
-    if (!weights_variable %in% colnames(data)) {
-      stop(paste0("Weight column '", weights_variable, "' not found"))
-    }
+  weight_col_internal <- ".WEIGHT_INTERNAL_TEMP"
+  if (!rlang::is_null(weights_variable)) {
+    if (!weights_variable %in% colnames(data)) stop(paste0("Weight column '", weights_variable, "' not found"))
     data[[weight_col_internal]] <- data[[weights_variable]]
-  } else {
-    data[[weight_col_internal]] <- 1
-  }
+  } else { data[[weight_col_internal]] <- 1 }
 
   # --- Select necessary columns ---
-  req_vars <- unique(c(
-    x_variable,
-    fill_variable,
-    weight_col_internal
-  ))
+  req_vars <- unique(c(x_variable, fill_variable, weight_col_internal))
   missing_vars <- setdiff(req_vars, colnames(data))
-  if (length(missing_vars) > 0) {
-      stop("Missing required columns in data: ", paste(missing_vars, collapse = ", "))
-  }
-  df_full <- data %>%
-    select(all_of(req_vars)) # Use all_of for safety with special chars
+  if (length(missing_vars) > 0) stop("Missing required columns in data: ", paste(missing_vars, collapse = ", "))
+  df_full <- data %>% select(all_of(req_vars))
 
   # --- Apply Filters ---
-  if (!is.null(filter_values)) {
-    df_full <- df_full %>%
-      filter(!!sym(fill_variable) %in% filter_values)
-  }
-  if (!is.null(x_filter_values)) {
-    df_full <- df_full %>%
-      filter(!!sym(x_variable) %in% x_filter_values)
-  }
-  # Check if data remains after filtering
-  if (nrow(df_full) == 0) {
-    stop("No data remaining after applying filters.")
-  }
+  if (!rlang::is_null(filter_values)) { df_full <- df_full %>% filter(!!sym(fill_variable) %in% filter_values) }
+  if (!rlang::is_null(x_filter_values)) { df_full <- df_full %>% filter(!!sym(x_variable) %in% x_filter_values) }
+  if (nrow(df_full) == 0) stop("No data remaining after applying filters.")
 
   is_party_graph <- x_variable == "dv_voteChoice"
 
   # --- Data processing based on graph type ---
-  # (Calculations... ensuring use of weight_col_internal and .data pronoun)
   if (graph_type == "difference_by_x") {
     y_variable <- fill_variable
-    if (!is.numeric(df_full[[y_variable]])) {
-       stop("For graph_type='difference_by_x', fill_variable ('", y_variable, "') must be numeric.")
-    }
+    if (!is.numeric(df_full[[y_variable]])) stop("For graph_type='difference_by_x', fill_variable ('", y_variable, "') must be numeric.")
     df_national <- df_full %>% filter(!is.na(!!sym(y_variable)), !is.na(!!sym(x_variable)))
     if (nrow(df_national) == 0) stop("No valid data for national average calculation.")
     national_average <- stats::weighted.mean(df_national[[y_variable]], df_national[[weight_col_internal]], na.rm = TRUE)
     df_groups <- df_full %>% filter(!is.na(!!sym(x_variable)), !is.na(!!sym(y_variable)))
-    if (is_party_graph && is.null(x_filter_values)) { df_groups <- df_groups %>% filter(!!sym(x_variable) != "other") }
+    if (is_party_graph && rlang::is_null(x_filter_values)) { df_groups <- df_groups %>% filter(!!sym(x_variable) != "other") }
     if (nrow(df_groups) == 0) stop("No valid data remaining for group average calculations.")
-    group_averages <- df_groups %>%
-      group_by(!!sym(x_variable)) %>%
-      summarize(
-        weighted_average = stats::weighted.mean(!!sym(y_variable), !!sym(weight_col_internal), na.rm = TRUE),
-        .groups = "drop"
-      )
-    plot_data <- group_averages %>% mutate( diff_from_national = .data$weighted_average - national_average, diff_from_national_pct = .data$diff_from_national * 100 )
+    group_averages <- df_groups %>% group_by(!!sym(x_variable)) %>% summarize(weighted_average = stats::weighted.mean(!!sym(y_variable), !!sym(weight_col_internal), na.rm = TRUE), .groups = "drop")
+    plot_data <- group_averages %>% mutate(diff_from_national = .data$weighted_average - national_average, diff_from_national_pct = .data$diff_from_national * 100)
     plot_data$original_x <- plot_data[[x_variable]]
-    if (is.null(subtitle)) { subtitle <- if (language == "fr") paste0("Écart par rapport à la moyenne canadienne (", y_variable, ")") else paste0("Difference from Canadian average (", y_variable, ")") }
+    if (rlang::is_null(subtitle)) { subtitle <- if (language == "fr") paste0("Écart par rapport à la moyenne canadienne (", y_variable, ")") else paste0("Difference from Canadian average (", y_variable, ")") }
     y_title <- y_title_set %||% (if (language == "fr") "Écart par rapport à la moyenne (points de %)" else "Difference from average (percentage points)")
 
   } else if (graph_type == "difference") {
@@ -295,49 +226,49 @@ create_standardized_graph <- function(graph_type = c("percentage",
     if (total_national_weight == 0) stop("Total national weight is zero, cannot calculate percentages.")
     national_averages <- df_national %>% group_by(!!sym(fill_variable)) %>% summarize(weighted_count = sum(!!sym(weight_col_internal), na.rm = TRUE), .groups = "drop") %>% mutate(national_pct = .data$weighted_count / total_national_weight * 100)
     df_groups <- df_full %>% filter(!is.na(!!sym(x_variable)), !is.na(!!sym(fill_variable)))
-    if (is_party_graph && is.null(x_filter_values)) { df_groups <- df_groups %>% filter(!!sym(x_variable) != "other") }
+    if (is_party_graph && rlang::is_null(x_filter_values)) { df_groups <- df_groups %>% filter(!!sym(x_variable) != "other") }
     if (nrow(df_groups) == 0) stop("No valid data remaining for group calculations.")
     group_totals <- df_groups %>% group_by(!!sym(x_variable)) %>% summarize(total_group_weight = sum(!!sym(weight_col_internal), na.rm = TRUE), .groups = "drop")
     group_stats <- df_groups %>% group_by(!!sym(x_variable), !!sym(fill_variable)) %>% summarize(weighted_count = sum(!!sym(weight_col_internal), na.rm = TRUE), .groups = "drop") %>% left_join(group_totals, by = x_variable) %>% mutate(group_pct = ifelse(.data$total_group_weight == 0, 0, .data$weighted_count / .data$total_group_weight * 100))
     plot_data <- group_stats %>% left_join(national_averages, by = fill_variable) %>% mutate(pct_diff_from_national = .data$group_pct - .data$national_pct)
-    if (is.null(subtitle)) { subtitle <- if (language == "fr") "Écart par rapport à la moyenne canadienne (points de %)" else "Difference from Canadian average (percentage points)" }
+    if (rlang::is_null(subtitle)) { subtitle <- if (language == "fr") "Écart par rapport à la moyenne canadienne (points de %)" else "Difference from Canadian average (percentage points)" }
     y_title <- y_title_set %||% (if (language == "fr") "Écart par rapport à la moyenne (points de %)" else "Difference from average (percentage points)")
 
   } else if (graph_type == "percentage") {
      df_groups <- df_full %>% filter(!is.na(!!sym(x_variable)), !is.na(!!sym(fill_variable)))
-     if (is_party_graph && is.null(x_filter_values)) { df_groups <- df_groups %>% filter(!!sym(x_variable) != "other") }
+     if (is_party_graph && rlang::is_null(x_filter_values)) { df_groups <- df_groups %>% filter(!!sym(x_variable) != "other") }
      if (nrow(df_groups) == 0) stop("No valid data remaining for group calculations.")
      group_totals <- df_groups %>% group_by(!!sym(x_variable)) %>% summarize(total_group_weight = sum(!!sym(weight_col_internal), na.rm = TRUE), .groups = "drop")
      plot_data <- df_groups %>% group_by(!!sym(x_variable), !!sym(fill_variable)) %>% summarize(weighted_count = sum(!!sym(weight_col_internal), na.rm = TRUE), .groups = "drop") %>% left_join(group_totals, by = x_variable) %>% mutate(group_pct = ifelse(.data$total_group_weight == 0, 0, .data$weighted_count / .data$total_group_weight * 100))
-     if (is.null(subtitle)) { subtitle <- if (language == "fr") "Pourcentage au sein de chaque groupe" else "Percentage within each group" }
+     if (rlang::is_null(subtitle)) { subtitle <- if (language == "fr") "Pourcentage au sein de chaque groupe" else "Percentage within each group" }
      y_title <- y_title_set %||% (if (language == "fr") "Pourcentage (%)" else "Percentage (%)")
 
   } else if (graph_type == "percentage_by_fill") {
      df_groups <- df_full %>% filter(!is.na(!!sym(x_variable)), !is.na(!!sym(fill_variable)))
-     if (is_party_graph && is.null(x_filter_values)) { df_groups <- df_groups %>% filter(!!sym(x_variable) != "other") }
+     if (is_party_graph && rlang::is_null(x_filter_values)) { df_groups <- df_groups %>% filter(!!sym(x_variable) != "other") }
      if (nrow(df_groups) == 0) stop("No valid data remaining for group calculations.")
      fill_totals <- df_groups %>% group_by(!!sym(fill_variable)) %>% summarize(total_fill_weight = sum(!!sym(weight_col_internal), na.rm = TRUE), .groups = "drop")
      plot_data <- df_groups %>% group_by(!!sym(x_variable), !!sym(fill_variable)) %>% summarize(weighted_count = sum(!!sym(weight_col_internal), na.rm = TRUE), .groups = "drop") %>% left_join(fill_totals, by = fill_variable) %>% mutate(fill_pct = ifelse(.data$total_fill_weight == 0, 0, .data$weighted_count / .data$total_fill_weight * 100))
-     if (is.null(subtitle)) { subtitle <- if (language == "fr") "Pourcentage au sein de chaque catégorie de remplissage" else "Percentage within each fill category" }
+     if (rlang::is_null(subtitle)) { subtitle <- if (language == "fr") "Pourcentage au sein de chaque catégorie de remplissage" else "Percentage within each fill category" }
      y_title <- y_title_set %||% (if (language == "fr") "Pourcentage (%)" else "Percentage (%)")
   }
 
   # --- Factor Ordering and Party Mapping ---
-  if (!is.null(x_order)) {
+  if (!rlang::is_null(x_order)) {
     valid_x_order <- intersect(x_order, unique(plot_data[[x_variable]]))
     if (length(valid_x_order) > 0) { plot_data[[x_variable]] <- factor(plot_data[[x_variable]], levels = valid_x_order) }
     else { warning("None of the values specified in x_order exist in the data for x_variable."); x_order <- NULL }
   }
   if (is_party_graph) {
     plot_data <- plot_data %>% mutate(!!sym(x_variable) := case_when(as.character(!!sym(x_variable)) %in% names(party_mapping[[language]]) ~ party_mapping[[language]][as.character(!!sym(x_variable))], TRUE ~ as.character(!!sym(x_variable))))
-    if (is.null(x_order)) {
+    if (rlang::is_null(x_order)) {
       valid_party_order <- intersect(default_party_order[[language]], unique(plot_data[[x_variable]]))
       if (length(valid_party_order) > 0) { plot_data[[x_variable]] <- factor(plot_data[[x_variable]], levels = valid_party_order) }
     }
   }
   if (!inherits(plot_data[[x_variable]], "factor")) { plot_data[[x_variable]] <- factor(plot_data[[x_variable]]) }
   if (graph_type != "difference_by_x") {
-    if (!is.null(fill_order)) {
+    if (!rlang::is_null(fill_order)) {
       valid_fill_order <- intersect(fill_order, unique(plot_data[[fill_variable]]))
       if (length(valid_fill_order) > 0) { plot_data[[fill_variable]] <- factor(plot_data[[fill_variable]], levels = valid_fill_order) }
       else { warning("None of the values specified in fill_order exist in the data for fill_variable.") }
@@ -347,26 +278,32 @@ create_standardized_graph <- function(graph_type = c("percentage",
 
   # --- Prepare X-axis Labels ---
   use_png_labels <- FALSE
-  final_x_axis_labels <- waiver() # Default ggplot labels
+  final_x_axis_labels <- waiver()
   original_x_labels_arg <- x_labels
 
-  if (!is.null(original_x_labels_arg)) {
-    # Ensure it's a named vector
-    if (is.null(names(original_x_labels_arg))) {
-      warning("x_labels must be a named vector. Ignoring.")
+  if (!rlang::is_null(original_x_labels_arg)) {
+    if (rlang::is_null(names(original_x_labels_arg))) {
+      warning("x_labels must be a named vector. Ignoring.", call. = FALSE)
     } else {
+      # Check which entries in x_labels are PNG paths
       is_png <- grepl("\\.png$", original_x_labels_arg, ignore.case = TRUE)
-      if (any(is_png)) {
+      # Ensure is_png has the same names as original_x_labels_arg
+      names(is_png) <- names(original_x_labels_arg)
+
+      if (any(is_png, na.rm = TRUE)) { # Check if any are TRUE png paths
         use_png_labels <- TRUE
         x_levels <- levels(plot_data[[x_variable]])
         markdown_labels <- sapply(x_levels, function(level) {
           original_key <- level
-          if (!is.null(reverse_party_mapping) && level %in% names(reverse_party_mapping)) {
+          if (!rlang::is_null(reverse_party_mapping) && level %in% names(reverse_party_mapping)) {
             original_key <- reverse_party_mapping[[level]]
           }
           label_value <- original_x_labels_arg[original_key]
-          if (!is.na(label_value) && !is.null(label_value)) {
-            if (is_png[original_key]) { # Check if THIS specific label is a png
+
+          if (!is.na(label_value) && !rlang::is_null(label_value)) {
+            # Use isTRUE() to safely handle potential NA when checking is_png
+            if (isTRUE(is_png[original_key])) {
+              # --- Handle PNG processing ---
               img_tag <- tryCatch({
                 is_url <- grepl("^https?://", label_value, ignore.case = TRUE)
                 local_path <- label_value
@@ -383,12 +320,27 @@ create_standardized_graph <- function(graph_type = c("percentage",
                 sprintf("<img src='%s' height='%d' />", label_value, new_height)
               }, error = function(e) { warning("Error processing image ", label_value, ": ", e$message, ". Using text '", level, "'.", call. = FALSE); return(as.character(level)) })
               return(img_tag)
-            } else { as.character(label_value) } # Text label
-          } else { as.character(level) } # Default: level name
+              # --- End image processing ---
+            } else {
+              # Use text label directly (key didn't exist or wasn't a PNG)
+              as.character(label_value)
+            }
+          } else {
+            # Default: use the factor level itself if no label value found
+            as.character(level)
+          }
         }, USE.NAMES = FALSE)
         final_x_axis_labels <- setNames(markdown_labels, x_levels)
       } else {
-        final_x_axis_labels <- original_x_labels_arg # All text labels
+        # If x_labels provided but no PNGs detected, use them as text labels
+        # Ensure names match levels
+        x_levels <- levels(plot_data[[x_variable]])
+        if(all(x_levels %in% names(original_x_labels_arg))) {
+           final_x_axis_labels <- original_x_labels_arg[x_levels] # Reorder to match levels
+        } else {
+           warning("Names in x_labels do not match all levels on x-axis. Using default axis labels.", call. = FALSE)
+           final_x_axis_labels <- waiver() # Fallback to default
+        }
       }
     }
   }
@@ -396,63 +348,53 @@ create_standardized_graph <- function(graph_type = c("percentage",
   # --- Create the ggplot object ---
   y_aes_var <- switch(graph_type, "percentage" = "group_pct", "difference" = "pct_diff_from_national", "percentage_by_fill" = "fill_pct", "difference_by_x" = "diff_from_national_pct")
   p <- ggplot(plot_data, aes(x = !!sym(x_variable), y = !!sym(y_aes_var))) +
-    # Add horizontal line at zero for difference plots FIRST
     (if (graph_type %in% c("difference", "difference_by_x")) { geom_hline(yintercept = 0, linetype = "dashed", color = "black") })
 
-  # Add bars based on graph type
+  # Add bars
   bar_position <- "dodge"
   bar_width <- if (graph_type == "difference_by_x") 0.6 else 0.9
 
   if (graph_type == "difference_by_x") {
-    if (!is.null(colors)) {
-      color_values_ordered <- colors[intersect(names(colors), unique(plot_data$original_x))]
-      if (length(color_values_ordered) == 0 && length(colors) > 0) {
-        warning("Names in 'colors' do not match values in 'x_variable' for difference_by_x. Using default fill.", call. = FALSE)
-        p <- p + geom_bar(stat = "identity", position = bar_position, fill = "#1A4782", width = bar_width)
-      } else if (length(color_values_ordered) > 0) {
-         p <- p + geom_bar(stat = "identity", position = bar_position, aes(fill = .data$original_x), width = bar_width) +
-                  scale_fill_manual(values = color_values_ordered, guide = "none", name = "") # Ensure no legend title
-      } # else case handled below if colors is NULL
-       else { # Handle case where colors were provided but none matched
-          p <- p + geom_bar(stat = "identity", position = bar_position, fill = "#1A4782", width = bar_width)
+    aes_fill <- if (!rlang::is_null(colors)) aes(fill = .data$original_x) else aes()
+    p <- p + geom_bar(stat = "identity", position = bar_position, mapping = aes_fill, width = bar_width)
+    if (!rlang::is_null(colors)) {
+       valid_color_keys <- intersect(names(colors), unique(plot_data$original_x))
+       if (length(valid_color_keys) == 0) {
+         warning("Names in 'colors' do not match values in 'x_variable' for difference_by_x. Using default fill.", call. = FALSE)
+         p <- p + scale_fill_manual(values = c("dummy" = "#1A4782"), guide = "none", name = "") # Hack for default color
+       } else {
+         p <- p + scale_fill_manual(values = colors[valid_color_keys], guide = "none", name = "")
        }
-    } else { # Default blue fill if colors is NULL
-      p <- p + geom_bar(stat = "identity", position = bar_position, fill = "#1A4782", width = bar_width)
+    } else {
+       p <- p + scale_fill_manual(values = c("dummy"="#1A4782"), guide = "none", name = "") # Apply default fill color properly
     }
-  } else { # Other graph types
+  } else {
     p <- p + geom_bar(stat = "identity", position = bar_position, aes(fill = !!sym(fill_variable)), width = bar_width)
+    # Apply fill scale later
   }
 
   # --- Apply Scales ---
-  # Fill scale (only if fill aesthetic was used and colors provided)
+  # Fill scale (only if fill aesthetic was used by geom_bar)
   if (graph_type != "difference_by_x") {
-    if (!is.null(colors)) {
-      fill_labels_to_use <- fill_labels %||% waiver() # Default to data values if NULL
-      # Ensure colors and labels align with factor levels if applicable
-       if (inherits(plot_data[[fill_variable]], "factor")) {
-          current_levels <- levels(plot_data[[fill_variable]])
-          # Check if colors are named and match levels
-          if(!is.null(names(colors)) && all(current_levels %in% names(colors))) {
-             colors <- colors[current_levels] # Reorder colors
-          } else {
-             warning("Names in 'colors' do not match levels of 'fill_variable'. Legend colors might be assigned incorrectly.", call. = FALSE)
-          }
-           # Check if fill_labels are named and match levels
-          if(!is.null(fill_labels) && !is.null(names(fill_labels)) && all(current_levels %in% names(fill_labels))) {
-             fill_labels_to_use <- fill_labels[current_levels] # Reorder labels
-          } else if (!is.null(fill_labels) && length(fill_labels) == length(current_levels) && is.null(names(fill_labels))) {
-             # Assume order is correct if unnamed and length matches
-              names(fill_labels_to_use) <- current_levels
-          } else if (!is.null(fill_labels)) {
-             warning("Names/length in 'fill_labels' do not match levels of 'fill_variable'. Using default legend labels.", call. = FALSE)
-             fill_labels_to_use <- waiver()
-          }
-       }
-       p <- p + scale_fill_manual(values = colors, labels = fill_labels_to_use, name = "") # Blank legend title
-    } else {
-       # Handle case where colors are NULL but fill_labels might be provided
-       fill_labels_to_use <- if (!is.null(fill_labels)) fill_labels else waiver()
-       p <- p + scale_fill_discrete(labels = fill_labels_to_use, name = "") # Blank legend title
+    fill_scale_args <- list(name = "") # Blank legend title default
+    if (!rlang::is_null(colors)) {
+      fill_scale_args$values <- colors
+      fill_scale_args$labels <- fill_labels %||% waiver()
+      # Reorder colors/labels to match factor levels if possible
+      if (inherits(plot_data[[fill_variable]], "factor")) {
+        current_levels <- levels(plot_data[[fill_variable]])
+        if(!rlang::is_null(names(colors)) && all(current_levels %in% names(colors))) { fill_scale_args$values <- colors[current_levels] }
+        else { warning("Names/length in 'colors' may not match levels of 'fill_variable'. Legend colors might be incorrect.", call. = FALSE) }
+        if(!rlang::is_null(fill_labels)) {
+           if(!rlang::is_null(names(fill_labels)) && all(current_levels %in% names(fill_labels))) { fill_scale_args$labels <- fill_labels[current_levels] }
+           else if (length(fill_labels) == length(current_levels) && rlang::is_null(names(fill_labels))) { names(fill_scale_args$labels) <- current_levels} # Apply names if length matches
+           else { warning("Names/length in 'fill_labels' do not match levels of 'fill_variable'. Using default labels.", call. = FALSE); fill_scale_args$labels <- waiver() }
+        }
+      }
+      p <- p + do.call(scale_fill_manual, fill_scale_args)
+    } else { # No colors specified, use default scale but apply labels if provided
+      fill_scale_args$labels <- fill_labels %||% waiver()
+      p <- p + do.call(scale_fill_discrete, fill_scale_args)
     }
   }
 
@@ -468,11 +410,9 @@ create_standardized_graph <- function(graph_type = c("percentage",
     theme_datagotchi_light()
 
   # Conditionally modify theme elements AFTER applying the base theme
-  # Apply specific text sizes, etc. from the original request
   if (use_png_labels) {
     p <- p + theme(
-      axis.text.x = ggtext::element_markdown(size = 11, lineheight = 1.5),
-      # Reapply other specific elements if theme_datagotchi_light doesn't set them
+      axis.text.x = ggtext::element_markdown(size = 11, lineheight = 1.5, hjust = 0.5), # Center align markdown
       axis.text.y = element_text(size = 52),
       axis.title.x = element_text(size = 56, margin = margin(t = 40)), # Increased margin
       axis.title.y = element_text(size = 72, face = "bold", margin = margin(r = 30)),
@@ -485,7 +425,7 @@ create_standardized_graph <- function(graph_type = c("percentage",
     )
   } else {
     p <- p + theme(
-      axis.text.x = element_text(angle = 0, hjust = 1, size = 52), # Original
+      axis.text.x = element_text(angle = 0, hjust = 1, size = 52), # Original text settings
       axis.text.y = element_text(size = 52),
       axis.title.x = element_text(size = 56, margin = margin(t = 30)),
       axis.title.y = element_text(size = 72, face = "bold", margin = margin(r = 30)),
@@ -499,20 +439,18 @@ create_standardized_graph <- function(graph_type = c("percentage",
   }
 
   # --- Save and Add Logos ---
-  if (!is.null(output_path)) {
+  if (!rlang::is_null(output_path)) {
     output_dir <- dirname(output_path)
     if (!dir.exists(output_dir)) { dir.create(output_dir, recursive = TRUE) }
     ggsave(plot = p, filename = output_path, width = 16, height = 9, dpi = 300, units = "in", scale = 1)
     # Assumes add_multiple_pngs is available in the package environment
-    if (add_logo && !is.null(logos_list) && exists("add_multiple_pngs")) {
+    if (add_logo && !rlang::is_null(logos_list) && exists("add_multiple_pngs")) {
       add_multiple_pngs(base_png_path = output_path, output_path = gsub("\\.png$", "_final.png", output_path), png_list = logos_list)
-    } else if (add_logo && is.null(logos_list) && exists("add_multiple_pngs")) { warning("add_logo=TRUE but logos_list is NULL. No logos added.", call. = FALSE) }
+    } else if (add_logo && rlang::is_null(logos_list) && exists("add_multiple_pngs")) { warning("add_logo=TRUE but logos_list is NULL. No logos added.", call. = FALSE) }
     else if (add_logo && !exists("add_multiple_pngs")) { warning("Function 'add_multiple_pngs' not found. Logos will not be added.", call. = FALSE) }
   }
 
-  # --- Clean up temporary weight column ---
-  # data[[weight_col_internal]] <- NULL # Remove column if modifying data in place
-  # Since data was copied by dplyr, this isn't strictly necessary unless memory is a huge concern
+  # No need to clean up internal weight column as df_full is local to function
 
   return(p)
 }
@@ -520,9 +458,6 @@ create_standardized_graph <- function(graph_type = c("percentage",
 # --- Helper Functions ---
 
 # Null coalescing operator (ensure it's available in the package or defined)
-# Provides a default value if an object is NULL
-`%||%` <- function(x, y) {
-  if (is.null(x)) y else x
-}
+`%||%` <- function(x, y) { if (rlang::is_null(x)) y else x }
 
-# No placeholder for theme_datagotchi_light() needed
+# No placeholder for theme_datagotchi_light() needed here

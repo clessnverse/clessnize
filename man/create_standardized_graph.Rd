@@ -74,7 +74,8 @@ default labels and party name mappings (default: "fr").}
 \item{colors}{Named vector where names correspond to the values in
 `fill_variable` (for most graph types) or `x_variable` (for
 "difference_by_x") and values are valid color specifications (e.g., hex
-codes, color names).}
+codes, color names). Names should match values *before* party mapping for
+difference_by_x.}
 
 \item{fill_labels}{Named vector providing display labels for the values in
 `fill_variable`. Names should match the data values, values are the labels
