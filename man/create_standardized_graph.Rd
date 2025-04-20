@@ -25,59 +25,67 @@ create_standardized_graph(
   add_caption_line = NULL,
   output_path = NULL,
   add_logo = TRUE,
-  logos_list = NULL
+  logos_list = NULL,
+  png_label_scale = 1
 )
 }
 \arguments{
-\item{graph_type}{String indicating the type of graph: "percentage", "difference", "percentage_by_fill", or "difference_by_x"
-- "percentage": Shows percentages of values within each group on the x-axis
-- "difference": Shows difference from national average for each group
-- "percentage_by_fill": Shows percentages of values within each fill category (bars for a fill category across all x-categories sum to 100%)
-- "difference_by_x": Shows difference from national average of a numeric variable for each x-category}
+\item{graph_type}{String indicating the type of graph: "percentage",
+"difference", "percentage_by_fill", or "difference_by_x".}
 
-\item{data}{Dataframe containing the data}
+\item{data}{Dataframe containing the data.}
 
-\item{x_variable}{String with the name of the variable for the x-axis (default: "dv_voteChoice")}
+\item{x_variable}{String with the name of the variable for the x-axis
+(default: "dv_voteChoice").}
 
-\item{fill_variable}{String with the name of the variable to use for fill colors in "percentage", "difference", and "percentage_by_fill" modes.
-In "difference_by_x" mode, this parameter specifies the numeric variable to analyze.}
+\item{fill_variable}{String with the name of the variable to use for fill
+colors or the numeric variable for "difference_by_x".}
 
-\item{weights_variable}{String with the name of the column containing weights (default: NULL for no weighting)}
+\item{weights_variable}{String with the name of the column containing weights
+(default: NULL).}
 
-\item{filter_values}{Optional vector of values to include from fill_variable}
+\item{filter_values}{Optional vector of values to include from fill_variable.}
 
-\item{x_filter_values}{Optional vector of values to include from x_variable}
+\item{x_filter_values}{Optional vector of values to include from x_variable.}
 
-\item{language}{"fr" or "en" for output language}
+\item{language}{"fr" or "en" for output language.}
 
-\item{colors}{Named vector with colors for each value in fill_variable (or in x_variable for "difference_by_x" mode)}
+\item{colors}{Named vector with colors for each value in fill_variable
+(or x_variable for "difference_by_x").}
 
-\item{fill_labels}{Named vector with display labels for each value in fill_variable}
+\item{fill_labels}{Named vector with display labels for each value in
+fill_variable.}
 
-\item{x_labels}{Named vector with display labels for each value in x_variable}
+\item{x_labels}{Named vector with display labels for each value in x_variable.
+**Can contain paths to PNG files (ending in .png) instead of text labels.**}
 
-\item{x_order}{Vector specifying the order of values on the x-axis}
+\item{x_order}{Vector specifying the order of values on the x-axis.}
 
-\item{fill_order}{Vector specifying the order of values in the fill variable}
+\item{fill_order}{Vector specifying the order of values in the fill variable.}
 
-\item{title}{Graph title}
+\item{title}{Graph title.}
 
-\item{subtitle}{Graph subtitle}
+\item{subtitle}{Graph subtitle.}
 
-\item{y_title}{Y-axis title}
+\item{y_title}{Y-axis title.}
 
-\item{custom_caption}{String to completely override the default caption}
+\item{custom_caption}{String to completely override the default caption.}
 
-\item{add_caption_line}{String to add as an additional line to the default caption}
+\item{add_caption_line}{String to add as an additional line to the default
+caption.}
 
-\item{output_path}{Path where to save the graph}
+\item{output_path}{Path where to save the graph.}
 
-\item{add_logo}{Logical indicating whether to add the Datagotchi logo}
+\item{add_logo}{Logical indicating whether to add the Datagotchi logo.}
 
-\item{logos_list}{Optional list of PNG logos to add (see add_png.R)}
+\item{logos_list}{Optional list of PNG logos to add (see add_png.R).}
+
+\item{png_label_scale}{Numeric scaling factor for PNG labels on the x-axis
+(default: 1.0 for original size). Applied to image height, width adjusts
+automatically.}
 }
 \value{
-A ggplot object
+A ggplot object.
 }
 \description{
 Create standardized data visualization graphs
