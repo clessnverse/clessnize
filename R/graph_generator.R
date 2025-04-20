@@ -12,7 +12,7 @@ library(scales)
 #' @param data Dataframe containing the data
 #' @param x_variable String with the name of the variable for the x-axis (default: "dv_voteChoice")
 #' @param fill_variable String with the name of the variable to use for fill colors in "percentage", "difference", and "percentage_by_fill" modes.
-#'        In "difference_by_x" mode, this parameter specifies the numeric variable to analyze.
+#'      In "difference_by_x" mode, this parameter specifies the numeric variable to analyze.
 #' @param weights_variable String with the name of the column containing weights (default: NULL for no weighting)
 #' @param filter_values Optional vector of values to include from fill_variable
 #' @param x_filter_values Optional vector of values to include from x_variable
@@ -179,8 +179,8 @@ create_standardized_graph <- function(
       filter(!is.na(!!sym(x_variable)))
     
     national_average <- weighted.mean(df_national[[y_variable]], 
-                                     df_national$.__weight_col__, 
-                                     na.rm = TRUE)
+                                       df_national$.__weight_col__, 
+                                       na.rm = TRUE)
     
     # Calculate group averages
     df_groups <- df_full %>%
@@ -237,7 +237,7 @@ create_standardized_graph <- function(
       # Set default order for party names (if x_order not specified)
       if (is.null(x_order)) {
         plot_data[[x_variable]] <- factor(plot_data[[x_variable]], 
-                                        levels = party_order[[language]])
+                                          levels = party_order[[language]])
       } else {
         # If x_order is provided, we need to map it to the display values
         mapped_order <- sapply(x_order, function(x) {
@@ -258,21 +258,25 @@ create_standardized_graph <- function(
     
     # Create the base plot with position for the bars
     p <- ggplot(plot_data, aes(x = !!sym(x_variable), 
-                             y = diff_from_national_pct)) +
+                               y = diff_from_national_pct)) +
       geom_hline(yintercept = 0, linetype = "dashed", color = "black")
     
     # Apply colors mapping to the original x values
     if (!is.null(colors)) {
       # Map the colors based on the original x values (before transformation)
+      # --- MODIFIED HERE ---
       p <- p + geom_bar(stat = "identity", 
-                       position = "dodge",
-                       aes(fill = original_x)) +
-             scale_fill_manual(values = colors, guide = "none")
+                        position = "dodge",
+                        aes(fill = original_x),
+                        width = 0.6) + # Added width argument
+            scale_fill_manual(values = colors, guide = "none")
     } else {
       # Default blue color if no colors provided
+      # --- MODIFIED HERE ---
       p <- p + geom_bar(stat = "identity", 
-                       position = "dodge",
-                       fill = "#1A4782")
+                        position = "dodge",
+                        fill = "#1A4782",
+                        width = 0.6) # Added width argument
     }
     
     # Default subtitle if not provided
@@ -337,7 +341,7 @@ create_standardized_graph <- function(
       # Set default order for party names (if x_order not specified)
       if (is.null(x_order)) {
         plot_data[[x_variable]] <- factor(plot_data[[x_variable]], 
-                                        levels = party_order[[language]])
+                                          levels = party_order[[language]])
       }
     }
     
@@ -355,7 +359,7 @@ create_standardized_graph <- function(
     p <- ggplot(plot_data, aes(x = !!sym(x_variable), 
                                y = pct_diff_from_national, 
                                fill = !!sym(fill_variable))) +
-      geom_bar(stat = "identity", position = "dodge") +
+      geom_bar(stat = "identity", position = "dodge") + # No width change here
       geom_hline(yintercept = 0, linetype = "dashed", color = "black")
     
     # Default subtitle if not provided
@@ -405,7 +409,7 @@ create_standardized_graph <- function(
       # Set default order for party names (if x_order not specified)
       if (is.null(x_order)) {
         plot_data[[x_variable]] <- factor(plot_data[[x_variable]], 
-                                        levels = party_order[[language]])
+                                          levels = party_order[[language]])
       }
     }
     
@@ -423,7 +427,7 @@ create_standardized_graph <- function(
     p <- ggplot(plot_data, aes(x = !!sym(x_variable), 
                                y = group_pct, 
                                fill = !!sym(fill_variable))) +
-      geom_bar(stat = "identity", position = "dodge")
+      geom_bar(stat = "identity", position = "dodge") # No width change here
     
     # Default subtitle if not provided
     if (is.null(subtitle)) {
@@ -471,7 +475,7 @@ create_standardized_graph <- function(
       # Set default order for party names (if x_order not specified)
       if (is.null(x_order)) {
         plot_data[[x_variable]] <- factor(plot_data[[x_variable]], 
-                                        levels = party_order[[language]])
+                                          levels = party_order[[language]])
       }
     }
     
@@ -489,7 +493,7 @@ create_standardized_graph <- function(
     p <- ggplot(plot_data, aes(x = !!sym(x_variable), 
                                y = fill_pct, 
                                fill = !!sym(fill_variable))) +
-      geom_bar(stat = "identity", position = "dodge")
+      geom_bar(stat = "identity", position = "dodge") # No width change here
     
     # Default subtitle if not provided
     if (is.null(subtitle)) {
@@ -537,18 +541,18 @@ create_standardized_graph <- function(
       fill = "",
       caption = caption_text
     ) +
-    theme_datagotchi_light() +
+    theme_datagotchi_light() + # Assuming theme_datagotchi_light exists
     theme(
-      axis.text.x = element_text(angle = 0, hjust = 1, size = 52),
-      axis.text.y = element_text(size = 52),
-      axis.title.x = element_text(size = 56, margin = margin(t = 30)),
-      axis.title.y = element_text(size = 72, face = "bold", margin = margin(r = 30)),
-      plot.title = element_text(size = 102, face = "bold", margin = margin(b = 15)),
-      plot.subtitle = element_text(size = 52, margin = margin(b = 15), hjust = 0.5),
-      plot.caption = element_text(size = 44, hjust = 0, lineheight = 0.3),
-      legend.title = element_text(size = 56),
-      legend.text = element_text(size = 52),
-      legend.key.size = unit(0.5, "in")
+      axis.text.x = element_text(angle = 0, hjust = 0.5, size = 12), # Adjusted hjust and size
+      axis.text.y = element_text(size = 12),
+      axis.title.x = element_text(size = 14, margin = margin(t = 10)), # Adjusted size/margin
+      axis.title.y = element_text(size = 14, face = "bold", margin = margin(r = 10)), # Adjusted size/margin
+      plot.title = element_text(size = 18, face = "bold", margin = margin(b = 10)), # Adjusted size/margin
+      plot.subtitle = element_text(size = 12, margin = margin(b = 10), hjust = 0.5), # Adjusted size/margin
+      plot.caption = element_text(size = 10, hjust = 0, lineheight = 1.2), # Adjusted size/lineheight
+      legend.title = element_text(size = 14),
+      legend.text = element_text(size = 12),
+      legend.key.size = unit(0.8, "cm") # Adjusted size
     )
   
   # Save with high resolution if path is provided
@@ -561,13 +565,15 @@ create_standardized_graph <- function(
            units = "in",
            scale = 1)
     
-    # Add logos if requested
-    if (add_logo && !is.null(logos_list)) {
+    # Add logos if requested and function exists
+    if (add_logo && !is.null(logos_list) && exists("add_multiple_pngs")) {
       add_multiple_pngs(
         base_png_path = output_path,
         output_path = gsub("\\.png$", "_final.png", output_path),
         png_list = logos_list
       )
+    } else if (add_logo && !exists("add_multiple_pngs")) {
+        warning("add_multiple_pngs function not found. Logos will not be added.")
     }
   }
   
@@ -576,3 +582,6 @@ create_standardized_graph <- function(
 
 # Null coalescing operator
 `%||%` <- function(x, y) if (is.null(x)) y else x
+
+# Placeholder for the theme function if it's not defined elsewhere
+# theme_datagotchi_light <- function(...) { theme_minimal(...) + theme(...) }
