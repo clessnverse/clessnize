@@ -1,7 +1,7 @@
 library(dplyr)
 library(ggplot2)
 library(scales)
-library(ggimage)  # Added for PNG support
+library(ggimage)  # Required for PNG support
 
 #' Create standardized data visualization graphs
 #'
@@ -539,6 +539,13 @@ create_standardized_graph <- function(
   if (!is.null(x_labels)) {
     # Check if any label ends with .png
     has_png_labels <- any(grepl("\\.png$", x_labels, ignore.case = TRUE))
+    
+    # For URLs, also check for common image URLs patterns
+    if (!has_png_labels) {
+      has_png_labels <- any(grepl("\\.(png|jpg|jpeg|gif)$", x_labels, ignore.case = TRUE)) ||
+                       any(grepl("githubusercontent\\.com", x_labels)) ||
+                       any(grepl("imgur\\.com", x_labels))
+    }
   }
   
   # Apply x-axis labels or images
@@ -566,19 +573,21 @@ create_standardized_graph <- function(
       })
     )
     
-    # Filter out any rows without PNGs
-    image_df <- image_df[!is.na(image_df$image) & grepl("\\.png$", image_df$image, ignore.case = TRUE), ]
+    # Filter out any rows without images
+    image_df <- image_df[!is.na(image_df$image), ]
     
-    # Add images to the plot
+    # Add images to the plot and completely remove text labels
     p <- p + 
       geom_image(data = image_df, 
                  aes(x = x, y = y, image = image), 
                  size = 0.1 * png_scale,  # Apply the scaling factor here
                  by = "width",  # Scale by width
                  inherit.aes = FALSE) +
+      scale_x_discrete(labels = NULL) +  # Explicitly set labels to NULL
       theme(
-        axis.text.x = element_blank(),
-        axis.ticks.x = element_blank(),
+        axis.text.x = element_blank(),      # Remove axis text
+        axis.ticks.x = element_blank(),     # Remove axis ticks
+        axis.line.x = element_blank(),      # Remove axis line
         plot.margin = margin(5.5, 5.5, 120, 5.5, "pt")  # Increased bottom margin for logos
       ) +
       coord_cartesian(clip = "off", ylim = c(NA, NA))  # Keep original y limits
@@ -622,6 +631,13 @@ create_standardized_graph <- function(
       legend.key.size = unit(0.5, "in") # Original setting
     )
   
+  # If PNG labels are used, override the x-axis text settings
+  if (has_png_labels) {
+    p <- p + theme(
+      axis.text.x = element_blank()  # Force removal of text when using PNG
+    )
+  }
+  
   # Save with high resolution if path is provided
   if (!is.null(output_path)) {
     ggsave(p,
@@ -641,11 +657,11 @@ create_standardized_graph <- function(
         png_list = logos_list
       )
     } else if (add_logo && !exists("add_multiple_pngs")) {
-        warning("Function 'add_multiple_pngs' not found. Logos will not be added.")
+       warning("Function 'add_multiple_pngs' not found. Logos will not be added.")
     }
-  }
-  
-  return(p)
+ }
+ 
+ return(p)
 }
 
 # Null coalescing operator
