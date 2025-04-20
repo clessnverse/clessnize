@@ -103,9 +103,9 @@ create_standardized_graph <- function(
   
   # Default caption text based on language
   default_caption <- if(language == "fr") {
-    paste0("Source : Léger-Datagotchi 2025 | n = ", nrow(data), caption_weight_text)
+    paste0("Source : Léger-Datagotchi 2025 | n = ", nrow(data), caption_weight_text) # Adjusted year based on current date
   } else {
-    paste0("Source: Léger-Datagotchi 2025 | n = ", nrow(data), caption_weight_text)
+    paste0("Source: Léger-Datagotchi 2025 | n = ", nrow(data), caption_weight_text) # Adjusted year based on current date
   }
   
   # Determine final caption: custom override, add a line, or use default
@@ -281,10 +281,12 @@ create_standardized_graph <- function(
     
     # Default subtitle if not provided
     if (is.null(subtitle)) {
+      # Use the actual variable name in the subtitle
+      y_var_name <- names(data)[names(data) == y_variable] # Get original name before potential aliasing
       subtitle <- if(language == "fr") {
-        paste0("Écart par rapport à la moyenne canadienne (", names(data)[names(data) == y_variable], ")")
+        paste0("Écart par rapport à la moyenne canadienne (", y_var_name, ")")
       } else {
-        paste0("Difference from Canadian average (", names(data)[names(data) == y_variable], ")")
+        paste0("Difference from Canadian average (", y_var_name, ")")
       }
     }
     
@@ -519,19 +521,39 @@ create_standardized_graph <- function(
     # For difference_by_x, the colors are already applied in the graph_type block
     if (graph_type != "difference_by_x") {
       # Use fill_labels if provided, otherwise use names from colors
-      if(is.null(fill_labels)) {
-        fill_labels <- names(colors)
+      fill_labels_to_use <- fill_labels %||% names(colors) # Use %||%
+      
+      # Ensure fill_labels_to_use matches the levels of the fill factor if ordered
+      if (inherits(plot_data[[fill_variable]], "factor") && !is.null(fill_order)) {
+          current_levels <- levels(plot_data[[fill_variable]])
+          # Reorder labels if needed
+          if (!identical(names(fill_labels_to_use), current_levels) && all(current_levels %in% names(fill_labels_to_use))) {
+              fill_labels_to_use <- fill_labels_to_use[current_levels]
+          }
       }
-      p <- p + scale_fill_manual(values = colors, labels = fill_labels)
+      
+      p <- p + scale_fill_manual(values = colors, labels = fill_labels_to_use)
     }
   }
   
   # Apply x-axis labels if provided
   if (!is.null(x_labels)) {
-    p <- p + scale_x_discrete(labels = x_labels)
+       # Ensure x_labels match the levels of the x factor if ordered
+      if (inherits(plot_data[[x_variable]], "factor")) {
+          current_levels <- levels(plot_data[[x_variable]])
+           # Reorder labels if needed
+           if (!identical(names(x_labels), current_levels) && all(current_levels %in% names(x_labels))) {
+                x_labels_to_use <- x_labels[current_levels]
+           } else {
+                x_labels_to_use <- x_labels
+           }
+           p <- p + scale_x_discrete(labels = x_labels_to_use)
+      } else {
+          p <- p + scale_x_discrete(labels = x_labels) # Apply directly if not factored
+      }
   }
   
-  # Add common styling
+  # Add common styling - REVERTED TO ORIGINAL
   p <- p + 
     labs(
       title = title,
@@ -543,16 +565,16 @@ create_standardized_graph <- function(
     ) +
     theme_datagotchi_light() + # Assuming theme_datagotchi_light exists
     theme(
-      axis.text.x = element_text(angle = 0, hjust = 0.5, size = 12), # Adjusted hjust and size
-      axis.text.y = element_text(size = 12),
-      axis.title.x = element_text(size = 14, margin = margin(t = 10)), # Adjusted size/margin
-      axis.title.y = element_text(size = 14, face = "bold", margin = margin(r = 10)), # Adjusted size/margin
-      plot.title = element_text(size = 18, face = "bold", margin = margin(b = 10)), # Adjusted size/margin
-      plot.subtitle = element_text(size = 12, margin = margin(b = 10), hjust = 0.5), # Adjusted size/margin
-      plot.caption = element_text(size = 10, hjust = 0, lineheight = 1.2), # Adjusted size/lineheight
-      legend.title = element_text(size = 14),
-      legend.text = element_text(size = 12),
-      legend.key.size = unit(0.8, "cm") # Adjusted size
+      axis.text.x = element_text(angle = 0, hjust = 1, size = 52), # Original setting
+      axis.text.y = element_text(size = 52), # Original setting
+      axis.title.x = element_text(size = 56, margin = margin(t = 30)), # Original setting
+      axis.title.y = element_text(size = 72, face = "bold", margin = margin(r = 30)), # Original setting
+      plot.title = element_text(size = 102, face = "bold", margin = margin(b = 15)), # Original setting
+      plot.subtitle = element_text(size = 52, margin = margin(b = 15), hjust = 0.5), # Original setting, added hjust=0.5 for centering
+      plot.caption = element_text(size = 44, hjust = 0, lineheight = 0.3), # Original setting
+      legend.title = element_text(size = 56), # Original setting
+      legend.text = element_text(size = 52), # Original setting
+      legend.key.size = unit(0.5, "in") # Original setting
     )
   
   # Save with high resolution if path is provided
@@ -567,13 +589,14 @@ create_standardized_graph <- function(
     
     # Add logos if requested and function exists
     if (add_logo && !is.null(logos_list) && exists("add_multiple_pngs")) {
+      # Ensure add_multiple_pngs function is available before calling
       add_multiple_pngs(
         base_png_path = output_path,
         output_path = gsub("\\.png$", "_final.png", output_path),
         png_list = logos_list
       )
     } else if (add_logo && !exists("add_multiple_pngs")) {
-        warning("add_multiple_pngs function not found. Logos will not be added.")
+        warning("Function 'add_multiple_pngs' not found. Logos will not be added.")
     }
   }
   
@@ -584,4 +607,5 @@ create_standardized_graph <- function(
 `%||%` <- function(x, y) if (is.null(x)) y else x
 
 # Placeholder for the theme function if it's not defined elsewhere
-# theme_datagotchi_light <- function(...) { theme_minimal(...) + theme(...) }
+# Replace this with your actual theme_datagotchi_light() function
+theme_datagotchi_light <- function(...) { ggplot2::theme_minimal(...) + ggplot2::theme(...) }
