@@ -2,7 +2,7 @@
 % Please edit documentation in R/graph_generator.R
 \name{create_standardized_graph}
 \alias{create_standardized_graph}
-\title{Create Standardized Data Visualization Graphs}
+\title{Create standardized data visualization graphs}
 \usage{
 create_standardized_graph(
   graph_type = c("percentage", "difference", "percentage_by_fill", "difference_by_x"),
@@ -26,111 +26,62 @@ create_standardized_graph(
   output_path = NULL,
   add_logo = TRUE,
   logos_list = NULL,
-  png_label_scale = 1
+  png_scale = 1
 )
 }
 \arguments{
-\item{graph_type}{String indicating the type of graph:
-\itemize{
-  \item{"percentage"}: Shows percentages of `fill_variable` values within
-    each group on the x-axis (bars within an x-group sum to 100%).
-  \item{"difference"}: Shows the difference (in percentage points) between
-    the percentage of each `fill_variable` value within an x-axis group
-    and the national average percentage for that `fill_variable` value.
-  \item{"percentage_by_fill"}: Shows the percentage distribution of
-    `x_variable` values within each group defined by `fill_variable`
-    (bars for a specific fill color across all x-categories sum to 100%).
-  \item{"difference_by_x"}: Shows the difference between the weighted mean
-    of a numeric `fill_variable` for each x-axis group and the overall
-    weighted mean of that variable across all included data. The
-    difference is typically shown in percentage points if the numeric
-    variable is scaled 0-1.
-}}
+\item{graph_type}{String indicating the type of graph: "percentage", "difference", "percentage_by_fill", or "difference_by_x"
+- "percentage": Shows percentages of values within each group on the x-axis
+- "difference": Shows difference from national average for each group
+- "percentage_by_fill": Shows percentages of values within each fill category (bars for a fill category across all x-categories sum to 100%)
+- "difference_by_x": Shows difference from national average of a numeric variable for each x-category}
 
-\item{data}{Dataframe containing the survey data.}
+\item{data}{Dataframe containing the data}
 
-\item{x_variable}{String with the name of the column in `data` to use for the
-x-axis (usually a categorical variable, default: "dv_voteChoice").}
+\item{x_variable}{String with the name of the variable for the x-axis (default: "dv_voteChoice")}
 
-\item{fill_variable}{String with the name of the column in `data` to use for
-fill colors in "percentage", "difference", and "percentage_by_fill" modes.
-In "difference_by_x" mode, this parameter specifies the numeric column
-to analyze.}
+\item{fill_variable}{String with the name of the variable to use for fill colors in "percentage", "difference", and "percentage_by_fill" modes.
+In "difference_by_x" mode, this parameter specifies the numeric variable to analyze.}
 
-\item{weights_variable}{String with the name of the column in `data`
-containing respondent weights (default: `NULL` for unweighted analysis).}
+\item{weights_variable}{String with the name of the column containing weights (default: NULL for no weighting)}
 
-\item{filter_values}{Optional vector of values. Only rows where the
-`fill_variable` column matches one of these values will be included in
-calculations (applied AFTER initial data selection).}
+\item{filter_values}{Optional vector of values to include from fill_variable}
 
-\item{x_filter_values}{Optional vector of values. Only rows where the
-`x_variable` column matches one of these values will be included in
-calculations (applied AFTER initial data selection).}
+\item{x_filter_values}{Optional vector of values to include from x_variable}
 
-\item{language}{String, either "fr" (French) or "en" (English), controlling
-default labels and party name mappings (default: "fr").}
+\item{language}{"fr" or "en" for output language}
 
-\item{colors}{Named vector where names correspond to the values in
-`fill_variable` (for most graph types) or `x_variable` (for
-"difference_by_x") and values are valid color specifications (e.g., hex
-codes, color names). Names should match values *before* party mapping for
-difference_by_x.}
+\item{colors}{Named vector with colors for each value in fill_variable (or in x_variable for "difference_by_x" mode)}
 
-\item{fill_labels}{Named vector providing display labels for the values in
-`fill_variable`. Names should match the data values, values are the labels
-for the legend. If `NULL`, the original values or names from `colors`
-are used.}
+\item{fill_labels}{Named vector with display labels for each value in fill_variable}
 
-\item{x_labels}{Named vector providing display labels for the values on the
-x-axis. Names should match the data values *before* potential party
-mapping (e.g., "lpc", "cpc"). Values are the desired labels.
-**Values can be paths to local PNG files or URLs pointing to PNG files
-(ending in .png) to display images instead of text.**}
+\item{x_labels}{Named vector with display labels for each value in x_variable}
 
-\item{x_order}{Optional vector specifying the desired order of categories
-on the x-axis. Values should match the data values *before* potential
-party mapping.}
+\item{x_order}{Vector specifying the order of values on the x-axis}
 
-\item{fill_order}{Optional vector specifying the desired order of categories
-in the legend (for applicable graph types). Values should match the data
-values in `fill_variable`.}
+\item{fill_order}{Vector specifying the order of values in the fill variable}
 
-\item{title}{String for the main graph title.}
+\item{title}{Graph title}
 
-\item{subtitle}{String for the graph subtitle. Default subtitles are
-provided based on `graph_type` and `language` if `NULL`.}
+\item{subtitle}{Graph subtitle}
 
-\item{y_title}{String for the y-axis title. Default titles are provided
-based on `graph_type` and `language` if `NULL`.}
+\item{y_title}{Y-axis title}
 
-\item{custom_caption}{String to completely override the default caption.
-The default caption includes source, sample size (n), and weighting info.}
+\item{custom_caption}{String to completely override the default caption}
 
-\item{add_caption_line}{String to add as an additional line *below* the
-default caption (ignored if `custom_caption` is provided).}
+\item{add_caption_line}{String to add as an additional line to the default caption}
 
-\item{output_path}{String specifying the full path (including filename and
-.png extension) where the generated graph should be saved. If `NULL`, the
-graph is not saved automatically.}
+\item{output_path}{Path where to save the graph}
 
-\item{add_logo}{Logical indicating whether to add logos specified in
-`logos_list` to the saved graph (default: `TRUE`). Requires the existence
-of an `add_multiple_pngs` function (assumed available in the package).}
+\item{add_logo}{Logical indicating whether to add the Datagotchi logo}
 
-\item{logos_list}{Optional list used by `add_multiple_pngs` function to
-specify logo files and their positions. See `add_png.R` documentation.}
+\item{logos_list}{Optional list of PNG logos to add (see add_png.R)}
 
-\item{png_label_scale}{Numeric scaling factor for PNG labels used on the
-x-axis (when `x_labels` provides image paths/URLs). Default is `1.0`
-(100% of original image size). The factor is applied to the image height,
-and the width adjusts automatically to maintain aspect ratio.}
+\item{png_scale}{Numeric value to scale PNG logos (default: 1, use 0.5 for 50%, 1.2 for 120%, etc.)}
 }
 \value{
-A `ggplot` object representing the generated graph.
+A ggplot object
 }
 \description{
-Generates various types of standardized graphs (percentages, differences from
-average) with options for weighting, filtering, custom labels (including
-PNG images for axis labels), colors, ordering, and logo overlays.
+Create standardized data visualization graphs
 }

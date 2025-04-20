@@ -1,6 +1,7 @@
 library(dplyr)
 library(ggplot2)
 library(scales)
+library(ggimage)  # Added for PNG support
 
 #' Create standardized data visualization graphs
 #'
@@ -30,15 +31,11 @@ library(scales)
 #' @param output_path Path where to save the graph
 #' @param add_logo Logical indicating whether to add the Datagotchi logo
 #' @param logos_list Optional list of PNG logos to add (see add_png.R)
+#' @param png_scale Numeric value to scale PNG logos (default: 1, use 0.5 for 50%, 1.2 for 120%, etc.)
 #'
 #' @return A ggplot object
 #' @export
 #' 
-#' @importFrom dplyr filter group_by summarize mutate left_join case_when select
-#' @importFrom ggplot2 ggplot aes geom_bar geom_hline scale_fill_manual scale_x_discrete labs theme element_text margin unit ggsave
-#' @importFrom scales percent
-#' @importFrom stats weighted.mean
-#' @importFrom rlang sym !!
 create_standardized_graph <- function(
   graph_type = c("percentage", "difference", "percentage_by_fill", "difference_by_x"),
   data,
@@ -60,7 +57,8 @@ create_standardized_graph <- function(
   add_caption_line = NULL,  # Parameter to add a line to the default caption
   output_path = NULL,
   add_logo = TRUE,
-  logos_list = NULL
+  logos_list = NULL,
+  png_scale = 1  # New parameter for scaling PNG logos
 ) {
   # Match the graph_type argument
   graph_type <- match.arg(graph_type)
@@ -536,21 +534,68 @@ create_standardized_graph <- function(
     }
   }
   
-  # Apply x-axis labels if provided
+  # Check if x_labels contain PNG paths
+  has_png_labels <- FALSE
   if (!is.null(x_labels)) {
-       # Ensure x_labels match the levels of the x factor if ordered
-      if (inherits(plot_data[[x_variable]], "factor")) {
-          current_levels <- levels(plot_data[[x_variable]])
-           # Reorder labels if needed
-           if (!identical(names(x_labels), current_levels) && all(current_levels %in% names(x_labels))) {
-                x_labels_to_use <- x_labels[current_levels]
-           } else {
-                x_labels_to_use <- x_labels
-           }
-           p <- p + scale_x_discrete(labels = x_labels_to_use)
+    # Check if any label ends with .png
+    has_png_labels <- any(grepl("\\.png$", x_labels, ignore.case = TRUE))
+  }
+  
+  # Apply x-axis labels or images
+  if (has_png_labels) {
+    # Get the x-axis positions
+    x_positions <- if (inherits(plot_data[[x_variable]], "factor")) {
+      levels(plot_data[[x_variable]])
+    } else {
+      sort(unique(plot_data[[x_variable]]))
+    }
+    
+    # Create a data frame for image positions
+    image_df <- data.frame(
+      x = seq_along(x_positions),
+      y = rep(-Inf, length(x_positions)),  # Position below plot
+      image = sapply(seq_along(x_positions), function(i) {
+        x_level <- x_positions[i]
+        if (x_level %in% names(x_labels)) {
+          x_labels[[x_level]]
+        } else if (i <= length(x_labels)) {
+          x_labels[i]
+        } else {
+          NA
+        }
+      })
+    )
+    
+    # Filter out any rows without PNGs
+    image_df <- image_df[!is.na(image_df$image) & grepl("\\.png$", image_df$image, ignore.case = TRUE), ]
+    
+    # Add images to the plot
+    p <- p + 
+      geom_image(data = image_df, 
+                 aes(x = x, y = y, image = image), 
+                 size = 0.1 * png_scale,  # Apply the scaling factor here
+                 by = "width",  # Scale by width
+                 inherit.aes = FALSE) +
+      theme(
+        axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(),
+        plot.margin = margin(5.5, 5.5, 120, 5.5, "pt")  # Increased bottom margin for logos
+      ) +
+      coord_cartesian(clip = "off", ylim = c(NA, NA))  # Keep original y limits
+    
+  } else if (!is.null(x_labels)) {
+    # Apply regular text labels
+    if (inherits(plot_data[[x_variable]], "factor")) {
+      current_levels <- levels(plot_data[[x_variable]])
+      if (!identical(names(x_labels), current_levels) && all(current_levels %in% names(x_labels))) {
+        x_labels_to_use <- x_labels[current_levels]
       } else {
-          p <- p + scale_x_discrete(labels = x_labels) # Apply directly if not factored
+        x_labels_to_use <- x_labels
       }
+      p <- p + scale_x_discrete(labels = x_labels_to_use)
+    } else {
+      p <- p + scale_x_discrete(labels = x_labels) # Apply directly if not factored
+    }
   }
   
   # Add common styling - REVERTED TO ORIGINAL
@@ -605,7 +650,3 @@ create_standardized_graph <- function(
 
 # Null coalescing operator
 `%||%` <- function(x, y) if (is.null(x)) y else x
-
-# Placeholder for the theme function if it's not defined elsewhere
-# Replace this with your actual theme_datagotchi_light() function
-theme_datagotchi_light <- function(...) { ggplot2::theme_minimal(...) + ggplot2::theme(...) }
