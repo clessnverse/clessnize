@@ -624,7 +624,7 @@ create_standardized_graph <- function(
       axis.title.x = element_text(size = 56, margin = margin(t = 30)), # Original setting
       axis.title.y = element_text(size = 72, face = "bold", margin = margin(r = 30)), # Original setting
       plot.title = element_text(size = 102, face = "bold", margin = margin(b = 15)), # Original setting
-      plot.subtitle = element_text(size = 52, margin = margin(b = 15), hjust = 0.5), # Original setting, added hjust=0.5 for centering
+      plot.subtitle = element_text(size = 52, margin = margin(b = 15), hjust = 0.5, lineheight = 1), # Added normal lineheight
       plot.caption = element_text(size = 44, hjust = 0, lineheight = 0.3), # Original setting
       legend.title = element_text(size = 56), # Original setting
       legend.text = element_text(size = 52), # Original setting
